@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html lang="es" data-theme="light" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - AutoSys Taller</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body { display: block; background-color: var(--bg-primary); color: var(--text-primary); transition: background-color 0.2s; }
+        .autosys-content { height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+        .topbar { padding: 1rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-card); transition: background-color 0.2s; }
+        .main-container { padding: 2rem; flex: 1; max-width: 1200px; margin: 0 auto; width: 100%; }
+        
+        /* Asegurar colores nativos de tarjetas para dark mode */
+        .card { background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-primary); transition: all 0.2s;}
+        .table { color: var(--text-primary); }
+        td, th { border-color: var(--border-color) !important; background-color: transparent !important; }
+        .form-control, .input-group-text { background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-primary); }
+        .form-control:focus { background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--primary-blue); box-shadow: none; }
+        
+        .logo-link { text-decoration: none; color: inherit; transition: opacity 0.2s; }
+        .logo-link:hover { opacity: 0.8; }
+
+        /* --- ARREGLO GLOBAL PARA LOS BOTONES EN MODO OSCURO --- */
+        [data-theme="dark"] .btn-primary {
+            background-color: #3b82f6 !important; 
+            border-color: #3b82f6 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3) !important; 
+        }
+        [data-theme="dark"] .btn-primary:hover {
+            background-color: #2563eb !important; 
+            border-color: #2563eb !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="autosys-content">
+        <header class="topbar shadow-sm">
+            <a asp-controller="Home" asp-action="Index" class="logo-link d-flex align-items-center gap-3">
+                <i class="fas fa-tools fs-4 text-primary"></i>
+                <h4 class="mb-0 fw-bold">AutoSys Taller</h4>
+            </a>
+            
+            <div class="d-flex align-items-center gap-3">
+                <a asp-controller="Migracion" asp-action="Index" class="btn btn-outline-success btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" title="Importar Historial Excel">
+                    <i class="fas fa-file-excel"></i>
+                </a>
+
+                <button id="themeToggle" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" title="Cambiar Tema">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <span class="text-muted small d-none d-sm-block"><i class="fas fa-calendar-alt me-2"></i>@DateTime.Now.ToString("dd/MM/yyyy")</span>
+            </div>
+        </header>
+
+        <main class="main-container">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.css"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const toggleBtn = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        
+        // Mantener memoria del último tema usado
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if(currentTheme === 'dark') setTheme('dark');
+
+        toggleBtn.addEventListener('click', () => {
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            setTheme(isDark ? 'light' : 'dark');
+        });
+
+        function setTheme(theme) {
+            html.setAttribute('data-theme', theme);
+            html.setAttribute('data-bs-theme', theme); 
+            localStorage.setItem('theme', theme);
+            toggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        }
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

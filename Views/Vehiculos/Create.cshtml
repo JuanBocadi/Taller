@@ -1,0 +1,59 @@
+@model Taller.Models.Vehiculo
+@{
+    ViewData["Title"] = "Alta de Vehículo";
+}
+
+<h2 class="mt-4 fw-bold">Registrar Nuevo Vehículo</h2>
+<h5 class="text-muted mb-4">Ingrese los datos para dar de alta en el sistema</h5>
+
+@if (TempData["Info"] != null)
+{
+    <div class="alert alert-info border-0 shadow-sm mb-4" style="border-radius: var(--radius-md);">
+        <i class="fas fa-info-circle me-2"></i>@TempData["Info"]
+    </div>
+}
+
+<div class="card shadow-sm border-0" style="border-radius: var(--radius-lg); background-color: var(--bg-card);">
+    <div class="card-body p-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <label asp-for="Patente" class="form-label fw-bold" style="color: var(--text-secondary);">Patente</label>
+                    <input asp-for="Patente" class="form-control form-control-lg text-uppercase" 
+                           placeholder="AAA111 o AA123BB" autocomplete="off" autofocus
+                           style="background-color: var(--input-bg); color: var(--text-primary); border-color: var(--border-color); letter-spacing: 1px; font-weight: 600;" />
+                    <span asp-validation-for="Patente" class="text-danger small"></span>
+                </div>
+                
+                <div class="col-md-4">
+                    <label asp-for="Marca" class="form-label fw-bold" style="color: var(--text-secondary);">Marca</label>
+                    <input asp-for="Marca" class="form-control form-control-lg" placeholder="Ej: Volkswagen" autocomplete="off"
+                           style="background-color: var(--input-bg); color: var(--text-primary); border-color: var(--border-color);" />
+                    <span asp-validation-for="Marca" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Modelo" class="form-label fw-bold" style="color: var(--text-secondary);">Modelo</label>
+                    <input asp-for="Modelo" class="form-control form-control-lg" placeholder="Ej: Gol Trend" autocomplete="off"
+                           style="background-color: var(--input-bg); color: var(--text-primary); border-color: var(--border-color);" />
+                    <span asp-validation-for="Modelo" class="text-danger small"></span>
+                </div>
+            </div>
+            
+            <div class="d-flex gap-2 mt-2">
+                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+                    <i class="fas fa-save me-2"></i> Guardar Vehículo
+                </button>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-lg btn-light rounded-pill px-4 border hover-shadow" style="background-color: var(--bg-primary); color: var(--text-primary);">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

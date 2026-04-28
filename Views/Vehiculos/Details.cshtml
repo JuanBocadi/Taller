@@ -1,0 +1,122 @@
+@model Taller.Models.Vehiculo
+@{
+    ViewData["Title"] = "Historial del Vehículo";
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h1 style="font-size: 1.875rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">
+                <i class="fas fa-car-side" style="margin-right: 0.5rem; color: #3b82f6;"></i>
+                Historial del Vehículo
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0;">Información completa y reparaciones registradas</p>
+        </div>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-3">
+            <i class="fas fa-arrow-left me-1"></i> Volver al Inicio
+        </a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success shadow-sm mb-4 border-0" style="border-radius: var(--radius-md);">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+    </div>
+}
+
+<div class="card mb-4 border-0 shadow-sm" style="border-radius: var(--radius-lg); background-color: var(--bg-card);">
+    <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3" style="border-bottom: 1px solid var(--border-color);">
+        <h5 class="mb-0 fw-bold" style="color: var(--text-primary);">Datos del Vehículo</h5>
+        
+        <div class="d-flex gap-2">
+            <form asp-controller="Vehiculos" asp-action="Delete" asp-route-id="@Model.Patente" method="post" class="d-inline" onsubmit="return confirm('¡ATENCIÓN! ¿Estás seguro que querés borrar el vehículo @Model.Patente y TODO su historial de reparaciones? Esta acción no se puede deshacer.');">
+                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3" title="Eliminar Vehículo">
+                    <i class="fas fa-trash me-1"></i> Borrar Vehículo
+                </button>
+            </form>
+
+            <a asp-controller="Reparaciones" asp-action="Create" asp-route-patente="@Model.Patente" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+                <i class="fas fa-plus me-1"></i> Nueva Reparación
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div style="padding: 1rem; background: var(--sidebar-hover); border-radius: var(--radius-md);">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="fas fa-id-card text-muted"></i>
+                        <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin: 0;">Patente</h3>
+                    </div>
+                    <p style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-primary); letter-spacing: 1px;">@Model.Patente</p>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div style="padding: 1rem; background: var(--sidebar-hover); border-radius: var(--radius-md); height: 100%;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="fas fa-tag text-muted"></i>
+                        <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin: 0;">Marca y Modelo</h3>
+                    </div>
+                    <p style="font-size: 1.125rem; font-weight: 500; margin: 0; color: var(--text-primary);">@Model.Marca @Model.Modelo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg); background-color: var(--bg-card);">
+    <div class="card-header bg-transparent py-3" style="border-bottom: 1px solid var(--border-color);">
+        <h5 class="mb-0 fw-bold" style="color: var(--text-primary);">Trabajos Realizados</h5>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Reparaciones.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="--bs-table-color: var(--text-primary);">
+                    <thead style="background-color: var(--sidebar-hover); color: var(--text-secondary);">
+                        <tr>
+                            <th class="px-4 py-3 border-0" style="font-weight: 600; width: 15%;">Fecha</th>
+                            <th class="px-4 py-3 border-0" style="font-weight: 600; width: 15%;">Kilometraje</th>
+                            <th class="px-4 py-3 border-0" style="font-weight: 600;">Detalle del Trabajo</th>
+                            <th class="px-4 py-3 border-0 text-end" style="font-weight: 600; width: 15%;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var rep in Model.Reparaciones)
+                        {
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td class="px-4 py-3 fw-medium">@rep.Fecha.ToShortDateString()</td>
+                                <td class="px-4 py-3">
+                                    <span class="badge bg-light text-dark border px-2 py-1">@rep.Kilometraje.ToString("N0") km</span>
+                                </td>
+                                <td class="px-4 py-3">@rep.Detalle</td>
+                                <td class="px-4 py-3 text-end">
+                                    <a asp-controller="Reparaciones" asp-action="Edit" asp-route-id="@rep.Id" class="btn btn-sm btn-outline-primary rounded-circle border-0 me-1" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form asp-controller="Reparaciones" asp-action="Delete" asp-route-id="@rep.Id" method="post" class="d-inline" onsubmit="return confirm('¿Seguro que querés borrar este trabajo de la historia del vehículo?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle border-0" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-5 text-center">
+                <div style="width: 4rem; height: 4rem; background: var(--sidebar-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                    <i class="fas fa-folder-open text-muted" style="font-size: 1.5rem;"></i>
+                </div>
+                <h6 class="fw-bold" style="color: var(--text-primary);">No hay trabajos registrados</h6>
+                <p class="text-muted mb-0">Hacé clic en "Nueva Reparación" para sumar el primero.</p>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,26 @@
+@{
+    ViewData["Title"] = "Importar Excel";
+}
+
+<div class="mt-4">
+    <h1 class="fw-bold"><i class="fas fa-file-excel text-success me-2"></i> Importar Historial</h1>
+    <p class="text-muted">Subí tus planillas .xls para incorporarlas al sistema.</p>
+</div>
+
+@if (TempData["Success"] != null) {
+    <div class="alert alert-success border-0 shadow-sm mb-4">@TempData["Success"]</div>
+}
+
+<div class="card shadow-sm border-0 mt-4" style="border-radius: 1rem; background-color: var(--bg-card);">
+    <div class="card-body p-5 text-center">
+        <form asp-action="SubirExcels" method="post" enctype="multipart/form-data">
+            <div class="mb-4 w-50 mx-auto">
+                <input class="form-control form-control-lg shadow-sm" type="file" name="archivosExcel" multiple accept=".xls,.xlsx" required 
+                       style="background-color: var(--input-bg); color: var(--text-primary); border-color: var(--border-color);">
+            </div>
+            <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow-sm">
+                <i class="fas fa-cogs me-2"></i> Iniciar Importación
+            </button>
+        </form>
+    </div>
+</div>

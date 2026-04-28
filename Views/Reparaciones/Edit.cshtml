@@ -1,0 +1,149 @@
+@model Taller.Models.Reparacion
+@{
+    ViewData["Title"] = "Editar Reparación";
+}
+
+<h2 class="mt-4 fw-bold">Editar Trabajo</h2>
+<h5 class="text-muted mb-4">Vehículo Patente: <span class="badge bg-dark fs-6 ms-2">@Model.Patente</span></h5>
+
+<div class="card shadow-sm border-0" style="border-radius: var(--radius-lg); background-color: var(--bg-card);">
+    <div class="card-body p-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="Patente" />
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="Fecha" class="form-label fw-bold" style="color: var(--text-secondary);">Fecha de Ingreso</label>
+                    
+                    <div class="input-group input-group-lg shadow-sm" style="border-radius: var(--radius-md); overflow: hidden;">
+                        <input asp-for="Fecha" type="text" id="fechaInput" class="form-control border-end-0" 
+                               placeholder="DD/MM/AAAA" autocomplete="off" 
+                               style="background-color: var(--input-bg); color: var(--text-primary); border-color: var(--border-color); font-weight: 500;" required />
+                        
+                        <button class="btn border border-start-0" type="button" id="btnCalendar" 
+                                style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-secondary);">
+                            <i class="fas fa-calendar-alt"></i>
+                        </button>
+                        
+                        <input type="date" id="hiddenDatePicker" tabindex="-1"
+                               style="position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; border: none;" />
+                    </div>
+                    <span asp-validation-for="Fecha" class="text-danger small"></span>
+                </div>
+                
+                <div class="col-md-6">
+                    <label asp-for="Kilometraje" class="form-label fw-bold" style="color: var(--text-secondary);">Kilometraje Actual</label>
+                    <div class="input-group input-group-lg shadow-sm" style="border-radius: var(--radius-md); overflow: hidden;">
+                        <input asp-for="Kilometraje" class="form-control" type="number" required min="0" max="2000000"
+                               style="background-color: var(--input-bg); color: var(--text-primary); border-color: var(--border-color);" />
+                        <span class="input-group-text border-start-0" style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-secondary);">km</span>
+                    </div>
+                    <span asp-validation-for="Kilometraje" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="Detalle" class="form-label fw-bold" style="color: var(--text-secondary);">Detalle del trabajo realizado</label>
+                <textarea asp-for="Detalle" class="form-control shadow-sm" rows="5" required
+                          placeholder="Especifique los repuestos cambiados y el trabajo realizado..." 
+                          style="background-color: var(--input-bg); color: var(--text-primary); border-color: var(--border-color);"></textarea>
+                <span asp-validation-for="Detalle" class="text-danger small"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+                    <i class="fas fa-save me-2"></i> Actualizar Historial
+                </button>
+                <a asp-controller="Vehiculos" asp-action="Details" asp-route-id="@Model.Patente" class="btn btn-lg rounded-pill px-4 border hover-shadow" style="background-color: var(--bg-primary); color: var(--text-primary);">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // --- LÓGICA DE LA FECHA (MÁSCARA + CALENDARIO) ---
+            const inputFecha = document.getElementById('fechaInput');
+            const btnCalendar = document.getElementById('btnCalendar');
+            const hiddenDatePicker = document.getElementById('hiddenDatePicker');
+
+            // 1. Limpiar el formato de fecha inicial que viene de C# (borrar la hora si existe)
+            if (inputFecha.value) {
+                // A veces C# trae "01/01/2026 00:00:00", nos quedamos solo con la parte de la fecha
+                inputFecha.value = inputFecha.value.split(' ')[0]; 
+                
+                // Si la fecha por alguna razón viene como YYYY-MM-DD
+                if (inputFecha.value.includes('-')) {
+                    const parts = inputFecha.value.split('-');
+                    if (parts.length === 3) inputFecha.value = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+            }
+
+            // 2. Setear la fecha actual en el calendario oculto para que no abra en el año 1900
+            if (inputFecha.value && inputFecha.value.includes('/')) {
+                const partes = inputFecha.value.split('/');
+                if(partes.length === 3){
+                    hiddenDatePicker.value = `${partes[2]}-${partes[1]}-${partes[0]}`;
+                }
+            } else {
+                 const hoy = new Date().toISOString().split('T')[0];
+                 hiddenDatePicker.value = hoy;
+            }
+
+            // Abrir calendario al tocar el botón
+            btnCalendar.addEventListener('click', function() {
+                try {
+                    hiddenDatePicker.showPicker();
+                } catch (error) {
+                    hiddenDatePicker.focus();
+                }
+            });
+
+            // Recibir la fecha elegida del calendario
+            hiddenDatePicker.addEventListener('change', function(e) {
+                if(e.target.value) {
+                    const parts = e.target.value.split('-'); 
+                    inputFecha.value = `${parts[2]}/${parts[1]}/${parts[0]}`; 
+                }
+            });
+
+            // Máscara al escribir
+            inputFecha.addEventListener('input', function (e) {
+                if (e.inputType === 'deleteContentBackward') return;
+                let valor = this.value.replace(/\D/g, ''); 
+                if (valor.length > 8) valor = valor.substring(0, 8);
+
+                if (valor.length >= 5) {
+                    this.value = valor.substring(0, 2) + '/' + valor.substring(2, 4) + '/' + valor.substring(4, 8);
+                } else if (valor.length >= 3) {
+                    this.value = valor.substring(0, 2) + '/' + valor.substring(2, 4);
+                } else {
+                    this.value = valor;
+                }
+            });
+
+            // Autocompletar año al perder el foco
+            inputFecha.addEventListener('blur', function () {
+                let valor = this.value;
+                let partes = valor.split('/');
+                if (partes.length === 3) {
+                    let dia = partes[0].padStart(2, '0');
+                    let mes = partes[1].padStart(2, '0');
+                    let anio = partes[2];
+                    if (anio.length === 2) {
+                        anio = parseInt(anio, 10) > 50 ? '19' + anio : '20' + anio;
+                    }
+                    this.value = `${dia}/${mes}/${anio}`;
+                }
+            });
+        });
+    </script>
+}
