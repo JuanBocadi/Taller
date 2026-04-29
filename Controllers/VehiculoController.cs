@@ -42,20 +42,28 @@ public class VehiculosController : Controller
     {
         if (ModelState.IsValid)
         {
-            vehiculo.Patente = vehiculo.Patente.ToUpper().Trim();
-            
-            // Verificar si por error intentan duplicar
-            if (await _context.Vehiculos.AnyAsync(v => v.Patente == vehiculo.Patente))
+            try 
             {
-                ModelState.AddModelError("Patente", "Esta patente ya está registrada.");
-                return View(vehiculo);
+                // Limpiamos la patente antes de guardar
+                vehiculo.Patente = vehiculo.Patente.Replace(" ", "").ToUpper().Trim();
+    
+                // Verificamos si ya existe para no romper la BD
+                var existe = await _context.Vehiculos.AnyAsync(v => v.Patente == vehiculo.Patente);
+                if (existe)
+                {
+                    ModelState.AddModelError("Patente", "Esta patente ya está registrada en el sistema.");
+                    return View(vehiculo);
+                }
+    
+                _context.Add(vehiculo);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Vehículo registrado correctamente.";
+                return RedirectToAction(nameof(Index), "Home");
             }
-
-            _context.Add(vehiculo);
-            await _context.SaveChangesAsync();
-            
-            TempData["Success"] = "Vehículo registrado correctamente.";
-            return RedirectToAction(nameof(Details), new { id = vehiculo.Patente });
+            catch (Exception)
+            {
+                ModelState.AddModelError("", "Ocurrió un error al guardar. Intente nuevamente.");
+            }
         }
         return View(vehiculo);
     }
