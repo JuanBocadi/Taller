@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\juanc\\Desktop\\Taller\\Taller.csproj": {}
+    "C:\\Users\\juanc\\Desktop\\Taller\\Taller\\Taller.csproj": {}
   },
   "projects": {
-    "C:\\Users\\juanc\\Desktop\\Taller\\Taller.csproj": {
+    "C:\\Users\\juanc\\Desktop\\Taller\\Taller\\Taller.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\juanc\\Desktop\\Taller\\Taller.csproj",
+        "projectUniqueName": "C:\\Users\\juanc\\Desktop\\Taller\\Taller\\Taller.csproj",
         "projectName": "Taller",
-        "projectPath": "C:\\Users\\juanc\\Desktop\\Taller\\Taller.csproj",
+        "projectPath": "C:\\Users\\juanc\\Desktop\\Taller\\Taller\\Taller.csproj",
         "packagesPath": "C:\\Users\\juanc\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\juanc\\Desktop\\Taller\\obj\\",
+        "outputPath": "C:\\Users\\juanc\\Desktop\\Taller\\Taller\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -22,15 +22,15 @@
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net9.0"
+          "net9.0-windows"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net9.0": {
-            "targetAlias": "net9.0",
+          "net9.0-windows7.0": {
+            "targetAlias": "net9.0-windows",
             "projectReferences": {}
           }
         },
@@ -47,8 +47,8 @@
         "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
-        "net9.0": {
-          "targetAlias": "net9.0",
+        "net9.0-windows7.0": {
+          "targetAlias": "net9.0-windows",
           "dependencies": {
             "ExcelDataReader": {
               "target": "Package",
@@ -67,6 +67,10 @@
             "Microsoft.EntityFrameworkCore.Sqlite": {
               "target": "Package",
               "version": "[9.0.0, )"
+            },
+            "Microsoft.Web.WebView2": {
+              "target": "Package",
+              "version": "[1.0.3912.50, )"
             },
             "System.Text.Encoding.CodePages": {
               "target": "Package",
@@ -90,6 +94,9 @@
             },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
+            },
+            "Microsoft.WindowsDesktop.App.WindowsForms": {
+              "privateAssets": "none"
             }
           },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"

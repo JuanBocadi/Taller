@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Directorio de Veh&#xED;culos - AutoSys Taller</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/site.css?v=09KWbI3babd9-gckfndQQDkASt7t6Ie5zElxBXpy1cA" />
+    <style>
+        body { display: block; background-color: var(--bg-primary); color: var(--text-primary); transition: background-color 0.2s; }
+        .autosys-content { height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+        .topbar { padding: 1rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-card); transition: background-color 0.2s; }
+        .main-container { padding: 2rem; flex: 1; max-width: 1200px; margin: 0 auto; width: 100%; }
+        
+        /* Asegurar colores nativos de tarjetas para dark mode */
+        .card { background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-primary); transition: all 0.2s;}
+        .table { color: var(--text-primary); }
+        td, th { border-color: var(--border-color) !important; background-color: transparent !important; }
+        .form-control, .input-group-text { background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-primary); }
+        .form-control:focus { background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--primary-blue); box-shadow: none; }
+        
+        .logo-link { text-decoration: none; color: inherit; transition: opacity 0.2s; }
+        .logo-link:hover { opacity: 0.8; }
+
+        /* --- ARREGLO GLOBAL PARA LOS BOTONES EN MODO OSCURO --- */
+        [data-theme="dark"] .btn-primary {
+            background-color: #3b82f6 !important; 
+            border-color: #3b82f6 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3) !important; 
+        }
+        [data-theme="dark"] .btn-primary:hover {
+            background-color: #2563eb !important; 
+            border-color: #2563eb !important;
+        }
+    </style>
+</head>
+<body>
+    <div b-fq2vbvnu55 class="autosys-content">
+        <header b-fq2vbvnu55 class="topbar shadow-sm">
+            <a class="logo-link d-flex align-items-center gap-3" href="/">
+                <i b-fq2vbvnu55 class="fas fa-tools fs-4 text-primary"></i>
+                <h4 b-fq2vbvnu55 class="mb-0 fw-bold">AutoSys Taller</h4>
+            </a>
+            
+            <div b-fq2vbvnu55 class="d-flex align-items-center gap-3">
+                <button b-fq2vbvnu55 id="themeToggle" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" title="Cambiar Tema">
+                    <i b-fq2vbvnu55 class="fas fa-moon"></i>
+                </button>
+                <span b-fq2vbvnu55 class="text-muted small d-none d-sm-block"><i b-fq2vbvnu55 class="fas fa-calendar-alt me-2"></i>04/05/2026</span>
+            </div>
+        </header>
+
+        <main b-fq2vbvnu55 class="main-container">
+            
+<style>
+    .search-container {
+        border-radius: 50rem !important; 
+        padding: 0.5rem;
+        background: var(--bg-card);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+    }
+    .search-container:focus-within {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border-color: #3b82f6;
+    }
+    .modern-input {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        color: var(--text-primary) !important;
+    }
+    .fade-in-row {
+        animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+    .loader-icon { display: none; animation: spin 1s linear infinite; }
+    .is-loading .search-icon { display: none; }
+    .is-loading .loader-icon { display: block; color: #3b82f6; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .modern-table-card {
+        border-radius: 1rem;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        background-color: var(--bg-card);
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-5 mt-3">
+    <div>
+        <h1 class="fw-bolder mb-1" style="font-size: 2.2rem; color: var(--text-primary);">Vehículos en Taller</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 0;">Gestioná el historial y los ingresos en tiempo real.</p>
+    </div>
+    <div>
+        <a class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm" style="font-weight: 600;" href="/Vehiculos/Create">
+            <i class="fas fa-plus me-2"></i> Nuevo Ingreso
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center mb-5">
+    <div class="col-md-8">
+        <div class="search-container d-flex align-items-center px-4" id="searchWrapper">
+            <i class="fas fa-search fs-5 search-icon" style="color: var(--text-secondary);"></i>
+            <i class="fas fa-circle-notch fs-5 loader-icon"></i>
+            <input type="text" id="buscadorPatente" class="form-control form-control-lg modern-input ms-2 text-uppercase" 
+                   placeholder="Buscar por patente, marca o modelo..." autocomplete="off" style="font-weight: 500; letter-spacing: 1px;">
+        </div>
+    </div>
+</div>
+
+<div class="modern-table-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-color: var(--text-primary);">
+            <thead style="background-color: var(--sidebar-hover); color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
+                <tr>
+                    <th class="px-4 py-3">Patente</th>
+                    <th class="px-4 py-3">Vehículo</th>
+                    <th class="px-4 py-3 text-center">Historial</th>
+                    <th class="px-4 py-3 text-end">Acción</th>
+                </tr>
+            </thead>
+            <tbody id="tablaVehiculosBody">
+                    <tr class="fade-in-row" style="animation-delay: 0ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                XDA 822
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+FIAT 147                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/XDA822">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 50ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                XBR 373
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+PEUG. 504                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/XBR373">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 100ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                XAJ 221
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+PEUG. 504                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/XAJ221">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 150ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                X4 822 93
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+F 100                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/X482293">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 200ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WZH 219
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+F 100                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 5 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WZH219">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 250ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WZE 102
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+RODEO                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 2 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WZE102">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 300ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WXZ 387
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+PEUG. 505                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WXZ387">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 350ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WWA 724
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+CHEVROLET                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 3 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WWA724">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 400ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WRW 495
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+SENDA                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WRW495">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 450ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WOT 344
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+CUSTOM                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 3 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WOT344">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 500ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WOG 030
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+TRAFIC                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WOG030">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 550ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WMN 599
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+SAVEIRO                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WMN599">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 600ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WLZ 486
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+DUNA 1,7                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WLZ486">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 650ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WKS 677
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+FORD 350                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WKS677">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 700ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WKI 416
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+FIAT 147                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 2 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WKI416">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 750ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WJV 714
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+SAVEIRO                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WJV714">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 800ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WIR 027
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+F 100                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WIR027">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 850ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WHK 758
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+PEUG. 504                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WHK758">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 900ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WHI 900
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+PEUG. 504                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WHI900">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="fade-in-row" style="animation-delay: 950ms; border-bottom: 1px solid var(--border-color);">
+                        <td class="px-4 py-3">
+                            <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">
+                                WFJ 037
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-medium">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);">
+                                    <i class="fas fa-car" style="color: var(--text-secondary);"></i>
+                                </div>
+                                <span>
+DUNA                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge rounded-pill text-bg-info text-white px-3 py-2">
+                                <i class="fas fa-wrench me-1"></i> 1 trabajos
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-end">
+                            <a class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);" href="/Vehiculos/Details/WFJ037">
+                                Abrir <i class="fas fa-chevron-right ms-1 small"></i>
+                            </a>
+                        </td>
+                    </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+    <nav aria-label="Paginación de vehículos" class="mt-4 mb-5">
+        <ul class="pagination pagination-sm justify-content-center border-0">
+            <li class="page-item disabled">
+                <a class="page-link rounded-pill px-3 me-2 border-0 shadow-sm" style="background: var(--bg-card); color: var(--text-primary);" href="/?page=0">
+                    <i class="fas fa-chevron-left me-1"></i> Anterior
+                </a>
+            </li>
+
+
+                <li class="page-item active">
+                    <a class="page-link rounded-circle mx-1 border-0 shadow-sm d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; background: #3b82f6; color: white;" href="/?page=1">1</a>
+                </li>
+                <li class="page-item ">
+                    <a class="page-link rounded-circle mx-1 border-0 shadow-sm d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; background: var(--bg-card); color: var(--text-primary);" href="/?page=2">2</a>
+                </li>
+                <li class="page-item ">
+                    <a class="page-link rounded-circle mx-1 border-0 shadow-sm d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; background: var(--bg-card); color: var(--text-primary);" href="/?page=3">3</a>
+                </li>
+                <li class="page-item ">
+                    <a class="page-link rounded-circle mx-1 border-0 shadow-sm d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; background: var(--bg-card); color: var(--text-primary);" href="/?page=4">4</a>
+                </li>
+                <li class="page-item ">
+                    <a class="page-link rounded-circle mx-1 border-0 shadow-sm d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; background: var(--bg-card); color: var(--text-primary);" href="/?page=5">5</a>
+                </li>
+
+            <li class="page-item ">
+                <a class="page-link rounded-pill px-3 ms-2 border-0 shadow-sm" style="background: var(--bg-card); color: var(--text-primary);" href="/?page=2">
+                    Siguiente <i class="fas fa-chevron-right ms-1"></i>
+                </a>
+            </li>
+        </ul>
+        <div class="text-center mt-2">
+            <small class="text-muted">Mostrando página 1 de 339 (6771 vehículos totales)</small>
+        </div>
+    </nav>
+
+
+        </main>
+    </div>
+
+    <script src="/lib/jquery/dist/jquery.min.css"></script>
+    <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const toggleBtn = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        
+        // Mantener memoria del último tema usado
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if(currentTheme === 'dark') setTheme('dark');
+
+        toggleBtn.addEventListener('click', () => {
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            setTheme(isDark ? 'light' : 'dark');
+        });
+
+        function setTheme(theme) {
+            html.setAttribute('data-theme', theme);
+            html.setAttribute('data-bs-theme', theme); 
+            localStorage.setItem('theme', theme);
+            toggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        }
+    </script>
+    
+    <script>
+        const buscador = document.getElementById('buscadorPatente');
+        const tbody = document.getElementById('tablaVehiculosBody');
+        const searchWrapper = document.getElementById('searchWrapper');
+        let timeoutId;
+
+        buscador.addEventListener('input', function () {
+            const query = this.value;
+            searchWrapper.classList.add('is-loading');
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                fetch(`/Home/BuscarAjax?query=${encodeURIComponent(query)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        tbody.innerHTML = '';
+                        searchWrapper.classList.remove('is-loading');
+                        data.forEach((item, index) => {
+                            const tr = document.createElement('tr');
+                            tr.className = "fade-in-row";
+                            tr.style.animationDelay = `${index * 50}ms`;
+                            tr.style.borderBottom = "1px solid var(--border-color)";
+                            
+                            let nombreAuto = (item.marca && item.marca !== "A DEFINIR") ? `${item.marca} ${item.modelo}` : item.modelo;
+
+                            tr.innerHTML = `
+                                <td class="px-4 py-3">
+                                    <span class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="letter-spacing: 1.5px; font-family: monospace;">${item.patenteFormateada}</span>
+                                </td>
+                                <td class="px-4 py-3 fw-medium">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: var(--sidebar-hover);"><i class="fas fa-car" style="color: var(--text-secondary);"></i></div>
+                                        <span style="color: var(--text-primary);">${nombreAuto}</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span class="badge rounded-pill ${item.reparacionesCount > 0 ? 'text-bg-info text-white' : 'border text-secondary'} px-3 py-2">
+                                        <i class="fas fa-wrench me-1"></i> ${item.reparacionesCount} trabajos
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-end">
+                                    <a href="/Vehiculos/Details/${item.patente}" class="btn btn-sm rounded-pill px-3 hover-shadow" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);">Abrir <i class="fas fa-chevron-right ms-1 small"></i></a>
+                                </td>`;
+                            tbody.appendChild(tr);
+                        });
+                    });
+            }, 300);
+        });
+    </script>
+
+</body>
+</html>

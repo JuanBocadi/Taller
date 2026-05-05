@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Taller")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+53087400fe5d728c1748a21aa9bd456252c92026")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9788cc690dbc896129325e9249fa2a446f384469")]
 [assembly: System.Reflection.AssemblyProductAttribute("Taller")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Taller")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
