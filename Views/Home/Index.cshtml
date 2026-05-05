@@ -158,8 +158,39 @@
     </nav>
 }
 
+<!-- SECCIÓN DE HERRAMIENTAS DIRECTAS 
+<div class="modern-table-card p-4 mt-5 mb-5" style="border-left: 4px solid #f59e0b;">
+    <h4 class="fw-bold mb-2" style="color: var(--text-primary);">
+        <i class="fas fa-tools text-warning me-2"></i> Herramientas de Sistema
+    </h4>
+    <p style="color: var(--text-secondary); font-size: 0.95rem;">
+        Al hacer clic, la pantalla cambiará para ejecutar el proceso. Puede tardar unos minutos, no cierres la ventana.
+    </p>
+    
+    <div class="d-flex gap-3 mt-4"> -->
+        <!-- Agregamos el evento onclick para mostrar carga 
+        <a href="/Migracion/LimpiarBaseDeDatos" onclick="mostrarCarga(this, 'Limpiando BD...')" class="btn btn-outline-danger px-4 rounded-pill fw-medium">
+            <i class="fas fa-trash-alt me-2"></i> 1. Limpiar Base de Datos
+        </a>
+        
+        <a href="/Migracion/MigrarTodoElDisco" onclick="mostrarCarga(this, 'Procesando archivos (esperá unos minutos)...')" class="btn btn-primary px-4 rounded-pill fw-medium shadow-sm">
+            <i class="fas fa-file-excel me-2"></i> 2. Migrar Excels (E:\Fichas)
+        </a>
+    </div>
+</div>
+ -->
 @section Scripts {
     <script>
+        // Función súper sencilla para darle feedback visual al usuario
+        function mostrarCarga(boton, texto) {
+            // Evitamos que el usuario haga doble clic por accidente
+            boton.style.pointerEvents = 'none';
+            // Cambiamos el texto y le ponemos un ícono de engranaje girando
+            boton.innerHTML = `<i class="fas fa-cog fa-spin me-2"></i> ${texto}`;
+            boton.classList.add('disabled');
+        }
+
+        // ... Acá abajo sigue tu código JS del buscador de patente que ya tenías ...
         const buscador = document.getElementById('buscadorPatente');
         const tbody = document.getElementById('tablaVehiculosBody');
         const searchWrapper = document.getElementById('searchWrapper');

@@ -24,5 +24,9 @@
     
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3912.50" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Update="taller.db">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

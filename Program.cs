@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Drawing; // Importante para los colores
+using System.IO; // Necesario para manejar rutas de archivos
+using System.Drawing; 
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.WinForms;
 using Taller.Data;
+
 
 namespace Taller
 {
@@ -15,8 +17,17 @@ namespace Taller
         [STAThread]
         static void Main(string[] args)
         {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            // ==========================================
+            // 0. CONFIGURACIÓN DE RUTAS (SOLUCIÓN BASE DE DATOS)
+            // ==========================================
+            // Obtenemos la ruta exacta de la carpeta donde se está ejecutando el .exe
+            string rutaEjecutable = AppDomain.CurrentDomain.BaseDirectory;
+            string rutaDb = Path.Combine(rutaEjecutable, "taller.db");
 
             // ==========================================
             // 1. PANTALLA DE CARGA MODERNA (DARK MODE)
@@ -24,23 +35,21 @@ namespace Taller
             var splash = new Form
             {
                 StartPosition = FormStartPosition.CenterScreen,
-                FormBorderStyle = FormBorderStyle.None, // Quitamos los bordes viejos de Windows
+                FormBorderStyle = FormBorderStyle.None,
                 Width = 420,
                 Height = 260,
-                BackColor = Color.FromArgb(15, 23, 42), // Azul medianoche muy elegante (Slate 900)
+                BackColor = Color.FromArgb(15, 23, 42),
                 ShowInTaskbar = false
             };
 
-            // Dibujar un borde azul de 2 píxeles alrededor de la ventana
             splash.Paint += (s, e) =>
             {
-                using (var pen = new Pen(Color.FromArgb(59, 130, 246), 2)) // Tu azul primario
+                using (var pen = new Pen(Color.FromArgb(59, 130, 246), 2))
                 {
                     e.Graphics.DrawRectangle(pen, 0, 0, splash.Width - 1, splash.Height - 1);
                 }
             };
 
-            // Ícono visual (Usamos un emoji gigante para que parezca un logo SVG)
             var lblIcon = new Label
             {
                 Text = "⚙️", 
@@ -53,7 +62,6 @@ namespace Taller
                 BackColor = Color.Transparent
             };
 
-            // Título principal
             var lblTitle = new Label
             {
                 Text = "AutoSys",
@@ -67,12 +75,11 @@ namespace Taller
                 BackColor = Color.Transparent
             };
 
-            // Subtítulo que va cambiando
             var lblStatus = new Label
             {
                 Text = "Iniciando motor web...",
                 Font = new Font("Segoe UI", 10, FontStyle.Regular),
-                ForeColor = Color.FromArgb(148, 163, 184), // Gris clarito elegante (Slate 400)
+                ForeColor = Color.FromArgb(148, 163, 184),
                 AutoSize = false,
                 Width = splash.Width,
                 Height = 30,
@@ -81,17 +88,15 @@ namespace Taller
                 BackColor = Color.Transparent
             };
 
-            // Fondo de la barrita de progreso
             var pnlProgressBg = new Panel
             {
                 Width = 280,
                 Height = 4,
-                BackColor = Color.FromArgb(30, 41, 59), // Azul oscuro de fondo
+                BackColor = Color.FromArgb(30, 41, 59),
                 Left = 70,
                 Top = 200
             };
 
-            // La barrita que avanza (Color azul primario)
             var pnlProgress = new Panel
             {
                 Width = 0,
@@ -107,11 +112,9 @@ namespace Taller
             splash.Controls.Add(lblTitle);
             splash.Controls.Add(lblIcon);
 
-            // Timer para hacer que la barrita avance súper fluido
             var timer = new System.Windows.Forms.Timer { Interval = 15 };
             timer.Tick += (s, e) =>
             {
-                // Avanza rápido hasta el 85% y ahí "espera" a que el servidor termine
                 if (pnlProgress.Width < pnlProgressBg.Width * 0.85)
                 {
                     pnlProgress.Width += 3;
@@ -127,15 +130,22 @@ namespace Taller
             // ==========================================
             var builder = WebApplication.CreateBuilder(args);
 
+            // Usamos la ruta absoluta configurada arriba para la base de datos
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=taller.db"));
+                options.UseSqlite($"Data Source={rutaDb}"));
 
             builder.Services.AddControllersWithViews();
-
-            // Agregamos el servicio en segundo plano para los backups automáticos
             builder.Services.AddHostedService<BackupBackgroundService>();
 
             var app = builder.Build();
+
+            app.UseDeveloperExceptionPage();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                dbContext.Database.EnsureCreated(); 
+            }
 
             app.UseStaticFiles();
             app.UseRouting();
@@ -157,7 +167,7 @@ namespace Taller
                 Height = 768,
                 WindowState = FormWindowState.Maximized,
                 Icon = SystemIcons.Application,
-                Opacity = 0 // MAGIA: Oculta la pantalla blanca
+                Opacity = 0 
             };
 
             var webView = new WebView2
@@ -181,12 +191,10 @@ namespace Taller
 
                 webView.NavigationCompleted += (s, ev) =>
                 {
-                    // Cuando termina de cargar, llenamos la barrita al 100% visualmente
                     pnlProgress.Width = pnlProgressBg.Width;
                     lblStatus.Text = "¡Listo!";
                     splash.Refresh();
 
-                    // Cerramos carga y mostramos la app nativa
                     timer.Stop();
                     splash.Close();
                     form.Opacity = 1;

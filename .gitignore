@@ -1,0 +1,14 @@
+# Carpetas de compilación
+bin/
+obj/
+publish/
+publish/taller.exe
+
+# Archivos de usuario de Visual Studio
+.vs/
+*.user
+*.suo
+
+# Base de datos local (opcional, si no quieres subir tus 6700 autos al repo)
+*.db
+*.db-journal

@@ -5,79 +5,97 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Taller // Cambiá esto si tu namespace es distinto
+namespace Taller 
 {
     public class BackupBackgroundService : BackgroundService
     {
-        private readonly string dbPath = "taller.db";
-        private readonly string configPath = "ultimo_backup.txt";
+        private readonly string rutaBase = AppDomain.CurrentDomain.BaseDirectory;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Este bucle corre silenciosamente mientras el programa esté abierto
+            // AL ARRANCAR: Esperamos unos segundos para no estorbar la pantalla de carga
+            await Task.Delay(8000, stoppingToken);
+
             while (!stoppingToken.IsCancellationRequested)
             {
+                // 1. ¿Toca hacer backup hoy?
                 if (NecesitaBackup())
                 {
-                    RealizarBackupSiHayPendrive();
-                }
+                    // 2. Si toca, buscamos el pendrive y lo intentamos
+                    bool exito = RealizarBackupSoloEnPendrive();
 
-                // Si lo hizo con éxito, o si no encontró el pendrive, 
-                // se va a dormir 1 hora y luego vuelve a probar.
-                // IMPORTANTE: Cuando cierren el programa y lo vuelvan a abrir mañana,
-                // este ciclo arranca de cero y prueba INSTANTÁNEAMENTE al inicio.
-                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+                    if (exito)
+                    {
+                        // Si se hizo bien, esperamos 1 hora para el próximo chequeo
+                        // (aunque el NecesitaBackup dará falso por los próximos 7 días)
+                        await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+                    }
+                    else
+                    {
+                        // Si NO se pudo (porque no estaba el pendrive), 
+                        // reintentamos más seguido, por ejemplo cada 30 minutos,
+                        // para "atrapar" el momento en que lo conecten.
+                        await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
+                    }
+                }
+                else
+                {
+                    // Si no toca hacer backup, chequeamos cada 4 horas solo por rutina
+                    await Task.Delay(TimeSpan.FromHours(4), stoppingToken);
+                }
             }
         }
 
         private bool NecesitaBackup()
         {
-            // Si el archivo no existe, significa que es la primera vez en la vida que se corre
+            string configPath = Path.Combine(rutaBase, "ultimo_backup.txt");
+            
+            // Si el archivo no existe, es la primera vez o lo borraron: toca backup.
             if (!File.Exists(configPath)) return true;
 
-            // Leemos la fecha del archivo .txt
             if (DateTime.TryParse(File.ReadAllText(configPath), out DateTime ultimaFecha))
             {
                 // ¿Pasaron 7 días o más?
                 return (DateTime.Now - ultimaFecha).TotalDays >= 7;
             }
             
-            // Si el archivo de texto se corrompió o alguien lo editó mal, forzamos backup
             return true; 
         }
 
-        private void RealizarBackupSiHayPendrive()
+        private bool RealizarBackupSoloEnPendrive()
         {
             try
             {
-                // Busca todas las unidades conectadas que sean del tipo "Removibles" (Pendrives/Discos USB)
+                string dbPath = Path.Combine(rutaBase, "taller.db");
+                string configPath = Path.Combine(rutaBase, "ultimo_backup.txt");
+
+                if (!File.Exists(dbPath)) return false;
+
+                // Buscamos ÚNICAMENTE unidades que Windows marque como Removibles (Pendrives)
                 var pendrive = DriveInfo.GetDrives()
                     .FirstOrDefault(d => d.DriveType == DriveType.Removable && d.IsReady);
 
                 if (pendrive != null)
                 {
-                    // Crea una carpeta prolija adentro del pendrive si no existe
                     string backupFolder = Path.Combine(pendrive.RootDirectory.FullName, "AutoSys_Backups");
-                    if (!Directory.Exists(backupFolder))
-                    {
-                        Directory.CreateDirectory(backupFolder);
-                    }
+                    if (!Directory.Exists(backupFolder)) Directory.CreateDirectory(backupFolder);
 
-                    // Genera el nombre con la fecha actual
                     string fecha = DateTime.Now.ToString("dd-MM-yyyy_HH-mm");
                     string destino = Path.Combine(backupFolder, $"taller_backup_{fecha}.db");
 
-                    // Copia la base de datos de la PC al pendrive
                     File.Copy(dbPath, destino, true);
+                    File.SetLastWriteTime(destino, DateTime.Now); 
 
-                    // Escribe en el archivito de texto la fecha de hoy, así no vuelve a joder por 7 días
-                    File.WriteAllText(configPath, DateTime.Now.ToString());
+                    // SOLO si la copia fue exitosa, actualizamos el archivo de fecha
+                    File.WriteAllText(configPath, DateTime.Now.ToString("O"));
+                    return true;
                 }
+                
+                return false; // No se encontró pendrive
             }
             catch
             {
-                // Si justo desconectaron el pendrive mientras copiaba o hay un error, 
-                // no hacemos que el sistema explote. Lo ignora y volverá a probar en la próxima hora.
+                return false; // Error (permisos, desconexión repentina, etc.)
             }
         }
     }

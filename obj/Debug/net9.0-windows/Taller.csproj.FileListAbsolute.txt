@@ -220,3 +220,4 @@ C:\Users\juanc\Desktop\Taller\Taller\obj\Debug\net9.0-windows\refint\Taller.dll
 C:\Users\juanc\Desktop\Taller\Taller\obj\Debug\net9.0-windows\Taller.pdb
 C:\Users\juanc\Desktop\Taller\Taller\obj\Debug\net9.0-windows\Taller.genruntimeconfig.cache
 C:\Users\juanc\Desktop\Taller\Taller\obj\Debug\net9.0-windows\ref\Taller.dll
+C:\Users\juanc\Desktop\Taller\Taller\bin\Debug\net9.0-windows\taller.db
