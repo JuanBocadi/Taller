@@ -4,6 +4,8 @@ using ExcelDataReader;
 using Taller.Data;
 using Taller.Models;
 using System.Data;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Taller.Controllers;
 
@@ -17,6 +19,53 @@ public class MigracionController : Controller
     }
 
     public IActionResult Index() => View();
+
+    // ==========================================
+    // MÉTODO HELPER ULTRA-ROBUSTO PARA KILOMETRAJE
+    // ==========================================
+    private int ExtraerKilometraje(object valor)
+    {
+        if (valor == null || valor == DBNull.Value) 
+            return 0;
+
+        // Si ya viene como número
+        if (valor is double d) return (int)Math.Round(d);
+        if (valor is int i) return i;
+        if (valor is decimal dec) return (int)Math.Round(dec);
+        if (valor is float f) return (int)Math.Round(f);
+
+        // Si viene como string, limpiamos TODA la basura posible
+        string texto = valor.ToString()?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(texto)) return 0;
+
+        // Formato típico de miles: 12.345 / 12,345 / 1 234 567
+        if (Regex.IsMatch(texto, @"^\s*\d{1,3}([\s\.,]\d{3})+\s*(km)?\s*$", RegexOptions.IgnoreCase))
+        {
+            string soloDigitosMiles = Regex.Replace(texto, @"\D", "");
+            if (int.TryParse(soloDigitosMiles, out int kmMiles))
+                return kmMiles;
+        }
+
+        // Removemos TODO excepto dígitos y el primer punto/coma decimal
+        // Ejemplos que maneja: "12.345", "12,345", "12.345,67", "12 345 km", etc.
+        texto = Regex.Replace(texto, @"[^\d,.-]", ""); // Quita letras, espacios, etc.
+        texto = texto.Replace(",", "."); // Unifica separador decimal
+
+        // Si tiene múltiples puntos (ej: "12.345.678"), nos quedamos solo con dígitos
+        if (texto.Count(c => c == '.') > 1)
+            texto = texto.Replace(".", "");
+
+        // Intentamos parsear
+        if (double.TryParse(texto, NumberStyles.Any, CultureInfo.InvariantCulture, out double resultado))
+            return (int)Math.Round(resultado);
+
+        // Último fallback: conservar solo dígitos y parsear entero
+        string soloDigitos = Regex.Replace(valor.ToString() ?? string.Empty, @"\D", "");
+        if (int.TryParse(soloDigitos, out int km))
+            return km;
+
+        return 0; // Si todo falló, devolvemos 0
+    }
 
     [HttpGet]
     public async Task<IActionResult> LimpiarBaseDeDatos()
@@ -41,6 +90,7 @@ public class MigracionController : Controller
     public async Task<IActionResult> SubirExcels(List<IFormFile> archivosExcel)
     {
         int vCreados = 0; int rCreadas = 0;
+        
         foreach (var file in archivosExcel)
         {
             if (file.Length == 0) continue;
@@ -69,7 +119,10 @@ public class MigracionController : Controller
 
                 int filaInicio = 0;
                 for (int i = 0; i < tabla.Rows.Count; i++) {
-                    if (tabla.Rows[i][0]?.ToString()?.ToUpper().Contains("FECHA") == true) { filaInicio = i + 1; break; }
+                    if (tabla.Rows[i][0]?.ToString()?.ToUpper().Contains("FECHA") == true) { 
+                        filaInicio = i + 1; 
+                        break; 
+                    }
                 }
 
                 if (filaInicio > 0) {
@@ -82,15 +135,22 @@ public class MigracionController : Controller
                         if (fila[0] is double n) f = DateTime.FromOADate(n);
                         else DateTime.TryParse(fila[0]?.ToString(), out f);
 
-                        int k = 0; if (fila[1] is double km) k = (int)km; else int.TryParse(fila[1]?.ToString(), out k);
+                        // 👇 USA EL MÉTODO ROBUSTO
+                        int k = ExtraerKilometraje(fila[1]);
 
-                        _context.Reparaciones.Add(new Reparacion { Patente = patente, Fecha = f, Kilometraje = k, Detalle = detalle });
+                        _context.Reparaciones.Add(new Reparacion { 
+                            Patente = patente, 
+                            Fecha = f, 
+                            Kilometraje = k, 
+                            Detalle = detalle 
+                        });
                         rCreadas++;
                     }
                 }
             }
             catch { continue; }
         }
+        
         await _context.SaveChangesAsync();
         TempData["Success"] = $"Importados: {vCreados} vehículos y {rCreadas} trabajos.";
         return RedirectToAction("Index");
@@ -109,8 +169,6 @@ public class MigracionController : Controller
         int vCreados = 0;
         int rCreadas = 0;
         var todosLosArchivos = Directory.GetFiles(rutaRaiz, "*.xls", SearchOption.AllDirectories);
-        var mapaPatenteArchivo = new Dictionary<string, string>();
-        var repartidos = new List<object>(); 
         var fallidos = new List<object>();
 
         _context.ChangeTracker.AutoDetectChangesEnabled = false;
@@ -131,7 +189,8 @@ public class MigracionController : Controller
                     string patente = tabla.Rows[0][1]?.ToString()?.Replace(" ", "").ToUpper().Trim() ?? "";
                     if (string.IsNullOrEmpty(patente)) continue;
 
-                    var vehiculo = await _context.Vehiculos.AsNoTracking().FirstOrDefaultAsync(v => v.Patente == patente);
+                    var vehiculo = await _context.Vehiculos.AsNoTracking()
+                        .FirstOrDefaultAsync(v => v.Patente == patente);
                     
                     if (vehiculo == null)
                     {
@@ -145,12 +204,14 @@ public class MigracionController : Controller
                         _context.Vehiculos.Add(vehiculo);
                         vCreados++;
                         await _context.SaveChangesAsync(); 
-                        mapaPatenteArchivo[patente] = nombreArchivo;
                     }
 
                     int filaInicio = 0;
                     for (int i = 0; i < tabla.Rows.Count; i++) {
-                        if (tabla.Rows[i][0]?.ToString()?.ToUpper().Contains("FECHA") == true) { filaInicio = i + 1; break; }
+                        if (tabla.Rows[i][0]?.ToString()?.ToUpper().Contains("FECHA") == true) { 
+                            filaInicio = i + 1; 
+                            break; 
+                        }
                     }
 
                     if (filaInicio > 0) {
@@ -163,9 +224,15 @@ public class MigracionController : Controller
                             if (fila[0] is double n) f = DateTime.FromOADate(n);
                             else DateTime.TryParse(fila[0]?.ToString(), out f);
 
-                            int k = 0; if (fila[1] is double km) k = (int)km; else int.TryParse(fila[1]?.ToString(), out k);
+                            // 👇 USA EL MÉTODO ROBUSTO
+                            int k = ExtraerKilometraje(fila[1]);
 
-                            _context.Reparaciones.Add(new Reparacion { Patente = patente, Fecha = f, Kilometraje = k, Detalle = detalle });
+                            _context.Reparaciones.Add(new Reparacion { 
+                                Patente = patente, 
+                                Fecha = f, 
+                                Kilometraje = k, 
+                                Detalle = detalle 
+                            });
                             rCreadas++;
                         }
                     }
@@ -184,7 +251,10 @@ public class MigracionController : Controller
         }
         catch (Exception ex)
         {
-            return Json(new { Error = "Error crítico en la migración", Detalle = ex.Message });
+            return Json(new { 
+                Error = "Error crítico en la migración", 
+                Detalle = ex.Message 
+            });
         }
         finally 
         {
@@ -201,4 +271,4 @@ public class MigracionController : Controller
             DetalleErrores = fallidos
         });
     }
-} // Aquí termina la Clase
+}

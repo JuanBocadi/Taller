@@ -2,12 +2,14 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.IO; // Necesario para manejar rutas de archivos
-using System.Drawing; 
+using System.IO;
+using System.Drawing;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.WinForms;
 using Taller.Data;
+using Taller.Infrastructure;
 
 
 namespace Taller
@@ -23,11 +25,33 @@ namespace Taller
             Application.SetCompatibleTextRenderingDefault(false);
 
             // ==========================================
-            // 0. CONFIGURACIÓN DE RUTAS (SOLUCIÓN BASE DE DATOS)
+            // 0. RUTA DE BASE DE DATOS UNIFICADA
             // ==========================================
-            // Obtenemos la ruta exacta de la carpeta donde se está ejecutando el .exe
-            string rutaEjecutable = AppDomain.CurrentDomain.BaseDirectory;
-            string rutaDb = Path.Combine(rutaEjecutable, "taller.db");
+            // Usamos una carpeta fija en Documentos del usuario.
+            // Esta ruta es IDÉNTICA tanto en "dotnet run" como en el .exe publicado,
+            // por lo que los datos migrados en desarrollo ya estarán disponibles al distribuir.
+            string rutaDb = AppPaths.GetDbPath();
+            string logPath = Path.Combine(AppPaths.GetOrCreateDataDirectory(), "startup.log");
+
+            void Log(string mensaje)
+            {
+                try
+                {
+                    File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {mensaje}{Environment.NewLine}");
+                }
+                catch { }
+            }
+
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+                Log($"UnhandledException: {e.ExceptionObject}");
+
+            TaskScheduler.UnobservedTaskException += (s, e) =>
+            {
+                Log($"UnobservedTaskException: {e.Exception}");
+                e.SetObserved();
+            };
+
+            Log("Inicio de aplicacion");
 
             // ==========================================
             // 1. PANTALLA DE CARGA MODERNA (DARK MODE)
@@ -52,7 +76,7 @@ namespace Taller
 
             var lblIcon = new Label
             {
-                Text = "⚙️", 
+                Text = "⚙️",
                 Font = new Font("Segoe UI", 36),
                 AutoSize = false,
                 Width = splash.Width,
@@ -101,11 +125,11 @@ namespace Taller
             {
                 Width = 0,
                 Height = 4,
-                BackColor = Color.FromArgb(59, 130, 246), 
+                BackColor = Color.FromArgb(59, 130, 246),
                 Left = 0,
                 Top = 0
             };
-            
+
             pnlProgressBg.Controls.Add(pnlProgress);
             splash.Controls.Add(pnlProgressBg);
             splash.Controls.Add(lblStatus);
@@ -128,9 +152,18 @@ namespace Taller
             // ==========================================
             // 2. CONFIGURACIÓN DEL SERVIDOR WEB (MVC)
             // ==========================================
-            var builder = WebApplication.CreateBuilder(args);
+            var contentRoot = AppContext.BaseDirectory;
+            var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+            {
+                Args = args,
+                ContentRootPath = contentRoot
+            });
 
-            // Usamos la ruta absoluta configurada arriba para la base de datos
+            // Puerto dinámico para evitar colisiones cuando 5000 ya está ocupado.
+            builder.WebHost.UseUrls("http://127.0.0.1:0");
+            Log($"ContentRoot: {contentRoot}");
+
+            // Usamos la ruta unificada definida arriba
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlite($"Data Source={rutaDb}"));
 
@@ -139,12 +172,30 @@ namespace Taller
 
             var app = builder.Build();
 
-            app.UseDeveloperExceptionPage();
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Home/Error");
+            }
 
             using (var scope = app.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                dbContext.Database.EnsureCreated(); 
+                try
+                {
+                    dbContext.Database.Migrate();
+                    Log("DB: migrate OK");
+                }
+                catch
+                {
+                    // Compatibilidad con bases existentes creadas con EnsureCreated.
+                    // Si no hay historial de migraciones, evitamos que la app se cierre.
+                    dbContext.Database.EnsureCreated();
+                    Log("DB: ensure created (fallback)");
+                }
             }
 
             app.UseStaticFiles();
@@ -155,7 +206,24 @@ namespace Taller
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
-            Task.Run(() => app.Run("http://localhost:5000"));
+            string serverUrl = "http://127.0.0.1:5000";
+
+            try
+            {
+                app.StartAsync().GetAwaiter().GetResult();
+                serverUrl = app.Urls.FirstOrDefault() ?? serverUrl;
+                Log($"Servidor web iniciado en {serverUrl}");
+            }
+            catch (Exception ex)
+            {
+                Log($"Error iniciando servidor web: {ex}");
+                MessageBox.Show(
+                    "No se pudo iniciar el servidor interno. Revisá startup.log en Documentos/AutoSys.",
+                    "AutoSys",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
 
             // ==========================================
             // 3. CONFIGURACIÓN DE LA VENTANA PRINCIPAL
@@ -167,7 +235,7 @@ namespace Taller
                 Height = 768,
                 WindowState = FormWindowState.Maximized,
                 Icon = SystemIcons.Application,
-                Opacity = 0 
+                Opacity = 0
             };
 
             var webView = new WebView2
@@ -179,29 +247,71 @@ namespace Taller
 
             form.Load += async (sender, e) =>
             {
-                lblStatus.Text = "Conectando a base de datos...";
-                lblStatus.Refresh();
-
-                await webView.EnsureCoreWebView2Async(null);
-                
-                lblStatus.Text = "Cargando interfaz...";
-                lblStatus.Refresh();
-                
-                webView.Source = new Uri("http://localhost:5000");
-
-                webView.NavigationCompleted += (s, ev) =>
+                bool principalMostrada = false;
+                void MostrarPrincipal()
                 {
+                    if (principalMostrada) return;
+                    principalMostrada = true;
                     pnlProgress.Width = pnlProgressBg.Width;
                     lblStatus.Text = "¡Listo!";
                     splash.Refresh();
 
                     timer.Stop();
-                    splash.Close();
+                    if (!splash.IsDisposed) splash.Close();
                     form.Opacity = 1;
+                }
+
+                var timerFallback = new System.Windows.Forms.Timer { Interval = 6000 };
+                timerFallback.Tick += (s, ev) =>
+                {
+                    timerFallback.Stop();
+                    Log("Fallback UI activado (NavigationCompleted no llego a tiempo)");
+                    MostrarPrincipal();
                 };
+
+                try
+                {
+                    lblStatus.Text = "Conectando a base de datos...";
+                    lblStatus.Refresh();
+
+                    await webView.EnsureCoreWebView2Async(null);
+
+                    lblStatus.Text = "Cargando interfaz...";
+                    lblStatus.Refresh();
+
+                    webView.NavigationCompleted += (s, ev) =>
+                    {
+                        Log($"NavigationCompleted: Success={ev.IsSuccess}, Status={ev.WebErrorStatus}");
+                        MostrarPrincipal();
+                    };
+
+                    timerFallback.Start();
+                    webView.Source = new Uri(serverUrl);
+                }
+                catch (Exception ex)
+                {
+                    Log($"Error inicializando WebView2: {ex}");
+                    timerFallback.Stop();
+                    MostrarPrincipal();
+                    MessageBox.Show(
+                        "No se pudo inicializar WebView2. Revisá startup.log en Documentos/AutoSys.",
+                        "AutoSys",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
             };
 
             Application.Run(form);
+
+            try
+            {
+                app.StopAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+                Log("Aplicacion detenida correctamente");
+            }
+            catch (Exception ex)
+            {
+                Log($"Error al detener servidor web: {ex}");
+            }
         }
     }
 }

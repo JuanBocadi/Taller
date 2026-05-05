@@ -4,13 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Taller.Infrastructure;
 
 namespace Taller 
 {
     public class BackupBackgroundService : BackgroundService
     {
-        private readonly string rutaBase = AppDomain.CurrentDomain.BaseDirectory;
-
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             // AL ARRANCAR: Esperamos unos segundos para no estorbar la pantalla de carga
@@ -48,7 +47,7 @@ namespace Taller
 
         private bool NecesitaBackup()
         {
-            string configPath = Path.Combine(rutaBase, "ultimo_backup.txt");
+            string configPath = AppPaths.GetBackupMarkerPath();
             
             // Si el archivo no existe, es la primera vez o lo borraron: toca backup.
             if (!File.Exists(configPath)) return true;
@@ -66,8 +65,8 @@ namespace Taller
         {
             try
             {
-                string dbPath = Path.Combine(rutaBase, "taller.db");
-                string configPath = Path.Combine(rutaBase, "ultimo_backup.txt");
+                string dbPath = AppPaths.GetDbPath();
+                string configPath = AppPaths.GetBackupMarkerPath();
 
                 if (!File.Exists(dbPath)) return false;
 

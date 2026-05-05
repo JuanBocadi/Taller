@@ -1,8 +1,11 @@
-# Carpetas de compilación
-bin/
-obj/
+# Carpetas de compilacion y salida
+[Bb]in/
+[Oo]bj/
 publish/
-publish/taller.exe
+publish_sc/
+**/publish/
+**/*.exe.WebView2/
+*.runtimeconfig.dev.json
 
 # Archivos de usuario de Visual Studio
 .vs/
@@ -12,3 +15,5 @@ publish/taller.exe
 # Base de datos local (opcional, si no quieres subir tus 6700 autos al repo)
 *.db
 *.db-journal
+*.db-wal
+*.db-shm

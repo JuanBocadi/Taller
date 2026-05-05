@@ -27,6 +27,7 @@ public class HomeController : Controller
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = (int)Math.Ceiling(totalVehiculos / (double)pageSize);
         ViewBag.TotalCount = totalVehiculos;
+        ViewBag.ShowMigrationTools = totalVehiculos == 0;
             
         return View(vehiculos);
     }

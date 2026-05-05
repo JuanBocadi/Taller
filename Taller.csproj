@@ -12,6 +12,11 @@
     <OutputType>WinExe</OutputType>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="ExcelDataReader" Version="3.8.0" />
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
@@ -23,10 +28,5 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.7" />
     
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3912.50" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="taller.db">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>
