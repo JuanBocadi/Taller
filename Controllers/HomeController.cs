@@ -9,8 +9,26 @@ public class HomeController : Controller
     private readonly AppDbContext _context;
     public HomeController(AppDbContext context) { _context = context; }
 
-    public async Task<IActionResult> Index() {
-        return View(await _context.Vehiculos.Include(v => v.Reparaciones).OrderBy(v => v.Patente).ToListAsync());
+    public async Task<IActionResult> Index(int page = 1)
+    {
+        int pageSize = 20; // Cantidad de autos por página
+        
+        // Contamos el total para saber cuántas páginas hay
+        var totalVehiculos = await _context.Vehiculos.CountAsync();
+        
+        var vehiculos = await _context.Vehiculos
+            .Include(v => v.Reparaciones)
+            .OrderByDescending(v => v.Patente) // Los "últimos" (según patente)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+    
+        // Pasamos los datos de paginación a la vista
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling(totalVehiculos / (double)pageSize);
+        ViewBag.TotalCount = totalVehiculos;
+            
+        return View(vehiculos);
     }
 
     [HttpGet]

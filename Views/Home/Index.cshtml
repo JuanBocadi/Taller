@@ -114,6 +114,50 @@
     </div>
 </div>
 
+@if (ViewBag.TotalPages > 1)
+{
+    <nav aria-label="Paginación de vehículos" class="mt-4 mb-5">
+        <ul class="pagination pagination-sm justify-content-center border-0">
+            @* Botón Anterior *@
+            <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link rounded-pill px-3 me-2 border-0 shadow-sm" 
+                   style="background: var(--bg-card); color: var(--text-primary);"
+                   asp-action="Index" asp-route-page="@(ViewBag.CurrentPage - 1)">
+                    <i class="fas fa-chevron-left me-1"></i> Anterior
+                </a>
+            </li>
+
+            @* Números de página (Muestra solo algunas si son muchas) *@
+            @{
+                int startPage = Math.Max(1, ViewBag.CurrentPage - 2);
+                int endPage = Math.Min(ViewBag.TotalPages, startPage + 4);
+                if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+            }
+
+            @for (int i = startPage; i <= endPage; i++)
+            {
+                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                    <a class="page-link rounded-circle mx-1 border-0 shadow-sm d-flex align-items-center justify-content-center" 
+                       style="width: 35px; height: 35px; @(i == ViewBag.CurrentPage ? "background: #3b82f6; color: white;" : "background: var(--bg-card); color: var(--text-primary);")"
+                       asp-action="Index" asp-route-page="@i">@i</a>
+                </li>
+            }
+
+            @* Botón Siguiente *@
+            <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                <a class="page-link rounded-pill px-3 ms-2 border-0 shadow-sm" 
+                   style="background: var(--bg-card); color: var(--text-primary);"
+                   asp-action="Index" asp-route-page="@(ViewBag.CurrentPage + 1)">
+                    Siguiente <i class="fas fa-chevron-right ms-1"></i>
+                </a>
+            </li>
+        </ul>
+        <div class="text-center mt-2">
+            <small class="text-muted">Mostrando página @ViewBag.CurrentPage de @ViewBag.TotalPages (@ViewBag.TotalCount vehículos totales)</small>
+        </div>
+    </nav>
+}
+
 @section Scripts {
     <script>
         const buscador = document.getElementById('buscadorPatente');

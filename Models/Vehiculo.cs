@@ -5,9 +5,12 @@ namespace Taller.Models;
 public class Vehiculo
 {
     [Key]
-    [Required(ErrorMessage = "La patente es obligatoria.")]
-    [RegularExpression(@"^[a-zA-Z0-9]{6,7}$", ErrorMessage = "La patente debe tener 6 o 7 caracteres alfanuméricos.")]
+    [Required(ErrorMessage = "La identificación es obligatoria.")]
+    // Quitamos el Regex estricto de aquí para validarlo manualmente en el controlador
+    [StringLength(20, ErrorMessage = "La identificación no puede superar los 20 caracteres.")]
     public string Patente { get; set; } = string.Empty;
+
+    public bool EsMaquinaria { get; set; } = false; // <--- Nuevo campo
 
     [Required(ErrorMessage = "La marca es obligatoria.")]
     [StringLength(50, MinimumLength = 2, ErrorMessage = "La marca debe tener entre 2 y 50 caracteres.")]
@@ -25,6 +28,10 @@ public class Vehiculo
         {
             if (string.IsNullOrWhiteSpace(Patente)) return "";
             string p = Patente.Replace(" ", "").ToUpper();
+            
+            // Si es maquinaria, no intentamos formatear como patente de auto
+            if (EsMaquinaria) return p;
+
             if (p.Length == 7) return $"{p.Substring(0, 2)} {p.Substring(2, 3)} {p.Substring(5, 2)}";
             if (p.Length == 6) return $"{p.Substring(0, 3)} {p.Substring(3, 3)}";
             return p;

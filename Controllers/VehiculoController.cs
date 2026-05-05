@@ -38,20 +38,31 @@ public class VehiculosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Patente,Marca,Modelo")] Vehiculo vehiculo)
+    public async Task<IActionResult> Create([Bind("Patente,Marca,Modelo,EsMaquinaria")] Vehiculo vehiculo)
     {
+        // 1. Limpiamos la patente
+        vehiculo.Patente = vehiculo.Patente.Replace(" ", "").ToUpper().Trim();
+    
+        // 2. Validación Manual: Si NO es maquinaria, obligamos formato estándar
+        if (!vehiculo.EsMaquinaria)
+        {
+            var regexVieja = new System.Text.RegularExpressions.Regex(@"^[A-Z]{3}[0-9]{3}$");
+            var regexNueva = new System.Text.RegularExpressions.Regex(@"^[A-Z]{2}[0-9]{3}[A-Z]{2}$");
+    
+            if (!regexVieja.IsMatch(vehiculo.Patente) && !regexNueva.IsMatch(vehiculo.Patente))
+            {
+                ModelState.AddModelError("Patente", "Formato inválido. Si es un vehículo especial (montacargas, etc.), active la opción correspondiente.");
+            }
+        }
+    
         if (ModelState.IsValid)
         {
             try 
             {
-                // Limpiamos la patente antes de guardar
-                vehiculo.Patente = vehiculo.Patente.Replace(" ", "").ToUpper().Trim();
-    
-                // Verificamos si ya existe para no romper la BD
                 var existe = await _context.Vehiculos.AnyAsync(v => v.Patente == vehiculo.Patente);
                 if (existe)
                 {
-                    ModelState.AddModelError("Patente", "Esta patente ya está registrada en el sistema.");
+                    ModelState.AddModelError("Patente", "Esta identificación ya está registrada.");
                     return View(vehiculo);
                 }
     
@@ -62,7 +73,7 @@ public class VehiculosController : Controller
             }
             catch (Exception)
             {
-                ModelState.AddModelError("", "Ocurrió un error al guardar. Intente nuevamente.");
+                ModelState.AddModelError("", "Ocurrió un error al guardar.");
             }
         }
         return View(vehiculo);
