@@ -6,6 +6,11 @@ using Taller.Models;
 using System.Data;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.IO;
+using System.Collections.Generic;
+using System.Threading;
+using System.Windows.Forms;
+using Taller.Infrastructure;
 
 namespace Taller.Controllers;
 
@@ -18,7 +23,48 @@ public class MigracionController : Controller
         _context = context;
     }
 
-    public IActionResult Index() => View();
+    public IActionResult Index()
+    {
+        var rutaActual = AppPaths.GetMigrationDirectory();
+        var model = new MigracionIndexViewModel
+        {
+            RutaActual = rutaActual
+        };
+
+        return View(model);
+    }
+
+    [HttpPost]
+    public IActionResult SeleccionarRuta()
+    {
+        var ruta = SeleccionarCarpetaNativa();
+        if (string.IsNullOrWhiteSpace(ruta))
+        {
+            return Json(new { exito = false, mensaje = "No se seleccionó ninguna carpeta." });
+        }
+
+        AppPaths.SetConfiguredMigrationDirectory(ruta);
+        return Json(new { exito = true, ruta });
+    }
+
+    [HttpPost]
+    public IActionResult GuardarRuta(string ruta)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(ruta))
+            {
+                return Json(new { exito = false, mensaje = "La ruta no puede estar vacía." });
+            }
+
+            AppPaths.SetConfiguredMigrationDirectory(ruta.Trim());
+            return Json(new { exito = true, ruta = ruta.Trim() });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { exito = false, mensaje = ex.Message });
+        }
+    }
 
     // ==========================================
     // MÉTODO HELPER ULTRA-ROBUSTO PARA KILOMETRAJE
@@ -157,13 +203,14 @@ public class MigracionController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> MigrarTodoElDisco()
+    public async Task<IActionResult> MigrarTodoElDisco(string? rutaRaiz = null)
     {
-        string rutaRaiz = @"E:\Fichas"; 
-        
+        rutaRaiz = ObtenerRutaMigracion(rutaRaiz);
+
         if (!Directory.Exists(rutaRaiz))
         {
-            return Json(new { Error = $"No se encontró la ruta {rutaRaiz}. Verificá el Pendrive." });
+            TempData["Error"] = $"No se encontro la ruta '{rutaRaiz}'. Verifica la carpeta y reintenta.";
+            return RedirectToAction("Index", "Home");
         }
 
         int vCreados = 0;
@@ -251,24 +298,70 @@ public class MigracionController : Controller
         }
         catch (Exception ex)
         {
-            return Json(new { 
-                Error = "Error crítico en la migración", 
-                Detalle = ex.Message 
-            });
+            TempData["Error"] = $"Error critico en la migracion: {ex.Message}";
+            return RedirectToAction("Index", "Home");
         }
         finally 
         {
             _context.ChangeTracker.AutoDetectChangesEnabled = true;
         }
 
-        return Json(new {
-            Resumen = new {
-                Total = todosLosArchivos.Length,
-                NuevosVehiculos = vCreados,
-                Reparaciones = rCreadas,
-                Errores = fallidos.Count
-            },
-            DetalleErrores = fallidos
+        TempData["Success"] =
+            $"Migracion completada desde '{rutaRaiz}'. Archivos: {todosLosArchivos.Length}, " +
+            $"Vehiculos nuevos: {vCreados}, Reparaciones: {rCreadas}, Errores: {fallidos.Count}.";
+
+        if (fallidos.Count > 0)
+        {
+            var nombres = string.Join(", ", fallidos.Take(5).Select(f => f.GetType().GetProperty("Archivo")?.GetValue(f)?.ToString()));
+            TempData["Error"] = $"Algunos archivos fallaron ({fallidos.Count}). Ejemplos: {nombres}";
+        }
+
+        return RedirectToAction("Index", "Home");
+    }
+
+    private static string ObtenerRutaMigracion(string? rutaIngresada)
+    {
+        if (!string.IsNullOrWhiteSpace(rutaIngresada))
+        {
+            return rutaIngresada.Trim();
+        }
+
+        return AppPaths.GetMigrationDirectory();
+    }
+
+    private static string? SeleccionarCarpetaNativa()
+    {
+        string? rutaSeleccionada = null;
+        using var evento = new ManualResetEvent(false);
+
+        var hilo = new Thread(() =>
+        {
+            using var dialog = new FolderBrowserDialog
+            {
+                Description = "Seleccioná la carpeta donde están las fichas para migrar",
+                UseDescriptionForTitle = true,
+                ShowNewFolderButton = false,
+                SelectedPath = AppPaths.GetMigrationDirectory()
+            };
+
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                rutaSeleccionada = dialog.SelectedPath;
+            }
+
+            evento.Set();
         });
+
+        hilo.SetApartmentState(ApartmentState.STA);
+        hilo.IsBackground = true;
+        hilo.Start();
+        evento.WaitOne();
+
+        return rutaSeleccionada;
+    }
+
+    public class MigracionIndexViewModel
+    {
+        public string RutaActual { get; set; } = string.Empty;
     }
 }

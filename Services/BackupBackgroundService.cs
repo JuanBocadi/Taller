@@ -20,8 +20,8 @@ namespace Taller
                 // 1. ¿Toca hacer backup hoy?
                 if (NecesitaBackup())
                 {
-                    // 2. Si toca, buscamos el pendrive y lo intentamos
-                    bool exito = RealizarBackupSoloEnPendrive();
+                    // 2. Si toca, usamos la ruta configurada (o la ruta por defecto)
+                    bool exito = RealizarBackup();
 
                     if (exito)
                     {
@@ -61,36 +61,31 @@ namespace Taller
             return true; 
         }
 
-        private bool RealizarBackupSoloEnPendrive()
+        private bool RealizarBackup()
         {
             try
             {
                 string dbPath = AppPaths.GetDbPath();
                 string configPath = AppPaths.GetBackupMarkerPath();
+                string backupFolder = AppPaths.GetBackupDirectory();
 
                 if (!File.Exists(dbPath)) return false;
 
-                // Buscamos ÚNICAMENTE unidades que Windows marque como Removibles (Pendrives)
-                var pendrive = DriveInfo.GetDrives()
-                    .FirstOrDefault(d => d.DriveType == DriveType.Removable && d.IsReady);
+                string fecha = DateTime.Now.ToString("dd-MM-yyyy_HH-mm");
+                string destino = Path.Combine(backupFolder, $"taller_backup_{fecha}.db");
 
-                if (pendrive != null)
+                using (var source = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}"))
+                using (var destination = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={destino}"))
                 {
-                    string backupFolder = Path.Combine(pendrive.RootDirectory.FullName, "AutoSys_Backups");
-                    if (!Directory.Exists(backupFolder)) Directory.CreateDirectory(backupFolder);
-
-                    string fecha = DateTime.Now.ToString("dd-MM-yyyy_HH-mm");
-                    string destino = Path.Combine(backupFolder, $"taller_backup_{fecha}.db");
-
-                    File.Copy(dbPath, destino, true);
-                    File.SetLastWriteTime(destino, DateTime.Now); 
-
-                    // SOLO si la copia fue exitosa, actualizamos el archivo de fecha
-                    File.WriteAllText(configPath, DateTime.Now.ToString("O"));
-                    return true;
+                    source.Open();
+                    destination.Open();
+                    source.BackupDatabase(destination);
                 }
-                
-                return false; // No se encontró pendrive
+                File.SetLastWriteTime(destino, DateTime.Now); 
+
+                // SOLO si la copia fue exitosa, actualizamos el archivo de fecha
+                File.WriteAllText(configPath, DateTime.Now.ToString("O"));
+                return true;
             }
             catch
             {

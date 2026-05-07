@@ -1,6 +1,7 @@
 # Carpetas de compilacion y salida
 [Bb]in/
 [Oo]bj/
+dist/
 publish/
 publish_sc/
 **/publish/

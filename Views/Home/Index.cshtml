@@ -1,166 +1,494 @@
 ﻿@model IEnumerable<Taller.Models.Vehiculo>
+
 @{
+
     ViewData["Title"] = "Directorio de Vehículos";
+
 }
+
+
 
 <style>
+
     .search-container {
-        border-radius: 50rem !important; 
+
+        border-radius: 50rem !important;
+
         padding: 0.5rem;
+
         background: var(--bg-card);
+
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+
         transition: all 0.3s ease;
+
         border: 1px solid var(--border-color);
+
     }
+
     .search-container:focus-within {
+
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
         border-color: #3b82f6;
+
     }
+
     .modern-input {
+
         border: none !important;
+
         background: transparent !important;
+
         box-shadow: none !important;
+
         color: var(--text-primary) !important;
+
     }
+
     .fade-in-row {
+
         animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+
         opacity: 0;
+
         transform: translateY(10px);
+
     }
+
     @@keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
-    .loader-icon { display: none; animation: spin 1s linear infinite; }
-    .is-loading .search-icon { display: none; }
-    .is-loading .loader-icon { display: block; color: #3b82f6; }
-    @@keyframes spin { 100% { transform: rotate(360deg); } }
+
     .modern-table-card {
+
         border-radius: 1rem;
+
         overflow: hidden;
+
         border: 1px solid var(--border-color);
+
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
         background-color: var(--bg-card);
+
     }
+
 </style>
 
+
+
 <div class="d-flex justify-content-between align-items-center mb-5 mt-3">
+
     <div>
+
         <h1 class="fw-bolder mb-1" style="font-size: 2.2rem; color: var(--text-primary);">Vehículos en Taller</h1>
+
         <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 0;">Gestioná el historial y los ingresos en tiempo real.</p>
+
     </div>
+
     <div>
+
         <a asp-controller="Vehiculos" asp-action="Create" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm" style="font-weight: 600;">
+
             <i class="fas fa-plus me-2"></i> Nuevo Ingreso
+
         </a>
+
     </div>
+
 </div>
+
+
+
+@if (TempData["Success"] != null)
+
+{
+
+    <div class="alert alert-success border-0 shadow-sm mb-4">
+
+        @TempData["Success"]
+
+    </div>
+
+}
+
+@if (TempData["Error"] != null)
+
+{
+
+    <div class="alert alert-danger border-0 shadow-sm mb-4">
+
+        @TempData["Error"]
+
+    </div>
+
+}
+
+
 
 @if (ViewBag.ShowMigrationTools == true)
+
 {
-    <!-- SECCIÓN DE HERRAMIENTAS (SOLO SI AÚN NO HAY DATOS) -->
+
     <div class="modern-table-card p-4 mb-5" style="border-left: 5px solid #3b82f6; background-color: rgba(59, 130, 246, 0.05);">
+
         <h4 class="fw-bold mb-2" style="color: var(--text-primary);">
+
             <i class="fas fa-tools text-primary me-2"></i> Panel de Control de Datos
+
         </h4>
+
         <p style="color: var(--text-secondary); font-size: 0.95rem;">
+
             Si la tabla está vacía, usá el botón azul para cargar los archivos del pendrive.
+
         </p>
-        
-        <div class="d-flex gap-3 mt-3"> 
+
+
+
+        <div class="d-flex gap-3 mt-3">
+
             <a href="/Migracion/LimpiarBaseDeDatos" onclick="mostrarCarga(this, 'Limpiando...')" class="btn btn-outline-danger px-4 rounded-pill fw-medium">
+
                 <i class="fas fa-trash-alt me-2"></i> 1. Vaciar Todo
+
             </a>
-            
-            <a href="/Migracion/MigrarTodoElDisco" onclick="mostrarCarga(this, 'Migrando archivos...')" class="btn btn-primary px-4 rounded-pill fw-medium shadow">
-                <i class="fas fa-file-excel me-2"></i> 2. Cargar Excels (E:\Fichas)
+
+
+
+            <a href="#" onclick="iniciarMigracion(this); return false;" class="btn btn-primary px-4 rounded-pill fw-medium shadow">
+
+                <i class="fas fa-file-excel me-2"></i> 2. Cargar Excels (Elegir carpeta)
+
             </a>
+
         </div>
+
     </div>
+
 }
+
+
 
 <div class="row justify-content-center mb-5">
+
     <div class="col-md-8">
+
         <div class="search-container d-flex align-items-center px-4" id="searchWrapper">
+
             <i class="fas fa-search fs-5 search-icon" style="color: var(--text-secondary);"></i>
-            <i class="fas fa-circle-notch fs-5 loader-icon"></i>
-            <input type="text" id="buscadorPatente" class="form-control form-control-lg modern-input ms-2 text-uppercase" 
-                   placeholder="Buscar patente, marca..." autocomplete="off">
+
+            <input type="text" id="buscadorPatente" class="form-control form-control-lg modern-input ms-2 text-uppercase"
+
+                   placeholder="Buscar patente, marca..." autocomplete="off" value="@ViewBag.SearchQuery">
+
         </div>
+
     </div>
+
 </div>
+
+
 
 <div class="modern-table-card">
+
     <div class="table-responsive">
+
         <table class="table table-hover align-middle mb-0">
+
             <thead style="background-color: var(--sidebar-hover);">
+
                 <tr>
+
                     <th class="px-4 py-3">Patente</th>
+
                     <th class="px-4 py-3">Vehículo</th>
+
                     <th class="px-4 py-3 text-center">Historial</th>
+
                     <th class="px-4 py-3 text-end">Acción</th>
+
                 </tr>
+
             </thead>
-            <tbody id="tablaVehiculosBody">
+
+            <tbody>
+
                 @foreach (var item in Model)
+
                 {
+
                     <tr class="fade-in-row">
+
                         <td class="px-4 py-3">
+
                             <span class="badge bg-dark">@item.PatenteFormateada</span>
+
                         </td>
+
                         <td class="px-4 py-3 fw-medium">
+
                             @if (string.IsNullOrEmpty(item.Marca) || item.Marca == "A DEFINIR") { @item.Modelo }
+
                             else { @($"{item.Marca} {item.Modelo}") }
+
                         </td>
+
                         <td class="px-4 py-3 text-center">
+
                             <span class="badge rounded-pill @(item.Reparaciones.Count > 0 ? "text-bg-info text-white" : "border text-secondary") px-3 py-2">
+
                                 <i class="fas fa-wrench me-1"></i> @item.Reparaciones.Count
+
                             </span>
+
                         </td>
+
                         <td class="px-4 py-3 text-end">
+
                             <a href="/Vehiculos/Details/@item.Patente" class="btn btn-sm rounded-pill px-3 border">Abrir</a>
+
                         </td>
+
                     </tr>
+
                 }
+
             </tbody>
+
         </table>
+
     </div>
+
 </div>
 
+
+
+@if ((int)ViewBag.TotalCount > 0)
+
+{
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mt-4 px-2">
+
+        <div class="text-muted small">
+
+            Mostrando página <strong>@ViewBag.CurrentPage</strong> de <strong>@ViewBag.TotalPages</strong>
+
+            (<strong>@ViewBag.TotalCount</strong> vehículos)
+
+        </div>
+
+        <nav aria-label="Paginación">
+
+            <ul class="pagination mb-0">
+
+                <!-- Botón Anterior -->
+
+                <li class="page-item @(ViewBag.CurrentPage <= 1 ? "disabled" : "")">
+
+                    <a class="page-link"
+
+                       asp-controller="Home" asp-action="Index"
+
+                       asp-route-page="@(ViewBag.CurrentPage - 1)"
+
+                       asp-route-buscar="@ViewBag.SearchQuery">
+
+                        <i class="fas fa-chevron-left"></i>
+
+                    </a>
+
+                </li>
+
+
+
+                <!-- Números de página -->
+
+                @{
+
+                    int startPage = Math.Max(1, ViewBag.CurrentPage - 2);
+
+                    int endPage = Math.Min((int)ViewBag.TotalPages, ViewBag.CurrentPage + 2);
+
+                    
+
+                    if (startPage > 1)
+
+                    {
+
+                        <li class="page-item">
+
+                            <a class="page-link" asp-controller="Home" asp-action="Index" asp-route-page="1" asp-route-buscar="@ViewBag.SearchQuery">1</a>
+
+                        </li>
+
+                        if (startPage > 2)
+
+                        {
+
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+
+                        }
+
+                    }
+
+                    
+
+                    for (int i = startPage; i <= endPage; i++)
+
+                    {
+
+                        <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+
+                            <a class="page-link" asp-controller="Home" asp-action="Index" asp-route-page="@i" asp-route-buscar="@ViewBag.SearchQuery">@i</a>
+
+                        </li>
+
+                    }
+
+                    
+
+                    if (endPage < ViewBag.TotalPages)
+
+                    {
+
+                        if (endPage < ViewBag.TotalPages - 1)
+
+                        {
+
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+
+                        }
+
+                        <li class="page-item">
+
+                            <a class="page-link" asp-controller="Home" asp-action="Index" asp-route-page="@ViewBag.TotalPages" asp-route-buscar="@ViewBag.SearchQuery">@ViewBag.TotalPages</a>
+
+                        </li>
+
+                    }
+
+                }
+
+
+
+                <!-- Botón Siguiente -->
+
+                <li class="page-item @(ViewBag.CurrentPage >= ViewBag.TotalPages ? "disabled" : "")">
+
+                    <a class="page-link"
+
+                       asp-controller="Home" asp-action="Index"
+
+                       asp-route-page="@(ViewBag.CurrentPage + 1)"
+
+                       asp-route-buscar="@ViewBag.SearchQuery">
+
+                        <i class="fas fa-chevron-right"></i>
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </nav>
+
+    </div>
+
+}
+
+
+
 @section Scripts {
+
     <script>
+
         function mostrarCarga(boton, texto) {
+
             boton.style.pointerEvents = 'none';
+
             boton.innerHTML = `<i class="fas fa-cog fa-spin me-2"></i> ${texto}`;
+
             boton.classList.add('disabled');
+
         }
 
-        const buscador = document.getElementById('buscadorPatente');
-        const tbody = document.getElementById('tablaVehiculosBody');
-        const searchWrapper = document.getElementById('searchWrapper');
 
+
+        function iniciarMigracion(boton) {
+
+            const sugerida = 'D:\\Fichas';
+
+            const ruta = prompt('Ingresá la ruta de la carpeta a migrar (ej: D:\\Fichas). Dejá vacío para autodetectar pendrive.', sugerida);
+
+            if (ruta === null) return;
+
+
+
+            mostrarCarga(boton, 'Migrando archivos...');
+
+            const query = ruta.trim() ? `?rutaRaiz=${encodeURIComponent(ruta.trim())}` : '';
+
+            window.location.href = `/Migracion/MigrarTodoElDisco${query}`;
+
+        }
+
+
+
+        const buscador = document.getElementById('buscadorPatente');
+
+        let searchTimer = null;
+
+        // En lugar de recargar la página, hacemos fetch y actualizamos la tabla y paginación
+        // para mantener el foco y la posición del cursor en el input (mejora en equipos lentos)
         buscador.addEventListener('input', function () {
             const query = this.value;
-            searchWrapper.classList.add('is-loading');
-            fetch(`/Home/BuscarAjax?query=${encodeURIComponent(query)}`)
-                .then(r => r.json())
-                .then(data => {
-                    tbody.innerHTML = '';
-                    searchWrapper.classList.remove('is-loading');
-                    data.forEach(item => {
-                        let nombreAuto = (item.marca && item.marca !== "A DEFINIR") ? `${item.marca} ${item.modelo}` : item.modelo;
-                        tbody.innerHTML += `
-                            <tr>
-                                <td class="px-4 py-3"><span class="badge bg-dark">${item.patenteFormateada}</span></td>
-                                <td class="px-4 py-3 fw-medium">${nombreAuto}</td>
-                                <td class="px-4 py-3 text-center">
-                                    <span class="badge rounded-pill ${item.reparacionesCount > 0 ? 'text-bg-info' : 'border'} px-3 py-2">
-                                        <i class="fas fa-wrench me-1"></i> ${item.reparacionesCount}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 text-end">
-                                    <a href="/Vehiculos/Details/${item.patente}" class="btn btn-sm rounded-pill px-3 border">Abrir</a>
-                                </td>
-                            </tr>`;
-                    });
-                });
+            const input = this;
+            const selStart = input.selectionStart;
+            const selEnd = input.selectionEnd;
+
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(async () => {
+                const q = encodeURIComponent(query.trim());
+                const url = q ? `/Home/Index?buscar=${q}&page=1` : '/Home/Index?page=1';
+
+                try {
+                    const resp = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                    if (!resp.ok) { window.location.href = url; return; }
+                    const html = await resp.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    const newTbody = doc.querySelector('.modern-table-card .table tbody');
+                    const newPagination = doc.querySelector('.pagination');
+
+                    if (newTbody) {
+                        const tbody = document.querySelector('.modern-table-card .table tbody');
+                        if (tbody) tbody.innerHTML = newTbody.innerHTML;
+                    } else {
+                        // Si no se pudo extraer, hacemos fallback a recarga completa
+                        window.location.href = url; return;
+                    }
+
+                    if (newPagination) {
+                        const pag = document.querySelector('.pagination');
+                        if (pag) pag.innerHTML = newPagination.innerHTML;
+                    }
+
+                    history.replaceState(null, '', url);
+
+                    // Restaurar foco y rango de selección (cursor)
+                    input.focus();
+                    try { input.setSelectionRange(selStart, selEnd); } catch (e) { }
+                } catch (err) {
+                    window.location.href = url;
+                }
+            }, 450);
         });
+
     </script>
+
 }
+
+

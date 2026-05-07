@@ -69,7 +69,8 @@ public class VehiculosController : Controller
                 _context.Add(vehiculo);
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "Vehículo registrado correctamente.";
-                return RedirectToAction(nameof(Index), "Home");
+                // Redirigir directamente al panel del vehículo creado para poder agregar reparaciones inmediatamente
+                return RedirectToAction("Details", "Vehiculos", new { id = vehiculo.Patente });
             }
             catch (Exception)
             {

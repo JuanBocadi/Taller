@@ -1,0 +1,431 @@
+@model Taller.Controllers.BackupController.BackupIndexViewModel
+
+@{
+    ViewData["Title"] = "Gestionar Backups";
+}
+
+<style>
+    .backup-card {
+        border-left: 5px solid #3b82f6;
+        transition: all 0.3s ease;
+        border-radius: 0.95rem;
+    }
+
+    .backup-card:hover {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .backup-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.85rem;
+        padding: 1.15rem;
+        margin-bottom: 1rem;
+    }
+
+    .backup-path {
+        word-break: break-all;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-5 mt-4">
+    <div>
+        <h1 class="fw-bolder mb-1" style="font-size: 2.2rem; color: var(--text-primary);">
+            <i class="fas fa-database me-2"></i>Gestionar Backups
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem;">Elegí una carpeta, revisá sus .db y guardá respaldos manuales ahí mismo</p>
+    </div>
+    <a href="/" class="btn btn-secondary rounded-pill px-4">
+        <i class="fas fa-arrow-left me-2"></i>Volver
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success border-0 shadow-sm mb-4">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="backup-card p-4 h-100" style="background: rgba(59, 130, 246, 0.05);">
+            <h5 class="fw-bold mb-3" style="color: var(--text-primary);">
+                <i class="fas fa-folder-open text-primary me-2"></i>Carpeta de backups
+            </h5>
+            <p class="small text-muted mb-2">Esta es la ruta que la app usa para crear y leer respaldos.</p>
+
+            <label class="form-label fw-semibold" style="color: var(--text-primary);">Ruta actual</label>
+            <div class="input-group mb-3">
+                <input id="rutaBackup" class="form-control backup-path" type="text" value="@Model.RutaActual">
+                <button type="button" class="btn btn-outline-primary" onclick="seleccionarRutaBackup(this)">
+                    <i class="fas fa-folder-open me-1"></i>Elegir
+                </button>
+                <button type="button" class="btn btn-primary" onclick="guardarRutaBackup(this)">
+                    <i class="fas fa-save me-1"></i>Guardar
+                </button>
+            </div>
+
+            <button type="button" class="btn btn-success rounded-pill w-100" onclick="crearBackupManual(this)">
+                <i class="fas fa-rotate-right me-2"></i>Crear backup manual
+            </button>
+
+            <div class="alert alert-info border-0 mt-3 mb-0" style="font-size: 0.9rem;">
+                <i class="fas fa-lightbulb me-1"></i>
+                El backup manual se guarda en la misma carpeta que seleccionaste arriba.
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="backup-card p-4 h-100" style="background: rgba(59, 130, 246, 0.05);">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h4 class="fw-bold mb-1" style="color: var(--text-primary);">
+                        <i class="fas fa-history me-2"></i>Archivos .db encontrados (@Model.Backups.Count)
+                    </h4>
+                    <p class="small text-muted mb-0">Se muestran todos los archivos .db de la carpeta seleccionada.</p>
+                </div>
+            </div>
+
+            @if (!Model.RutaDisponible)
+            {
+                <div class="alert alert-warning border-0 shadow-sm mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>No se encontró la carpeta configurada.</strong>
+                    Conectá el pendrive o elegí otra ruta para ver los backups.
+                </div>
+            }
+            else if (Model.Backups.Count == 0)
+            {
+                <div class="alert alert-warning border-0 shadow-sm mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>No hay archivos .db en la carpeta seleccionada.</strong>
+                    Elegí otra ruta o creá un backup manual.
+                </div>
+            }
+            else
+            {
+                foreach (var backup in Model.Backups)
+                {
+                    <div class="backup-item">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <h5 class="mb-1" style="color: var(--text-primary);">
+                                    <i class="fas fa-save me-2"></i>@backup.NombreArchivo
+                                </h5>
+                                <small style="color: var(--text-secondary); display: block; line-height: 1.7;">
+                                    <i class="fas fa-calendar me-1"></i>@backup.Fecha.ToString("dd/MM/yyyy HH:mm:ss")
+                                    <span class="ms-3"><i class="fas fa-hdd me-1"></i>@backup.TamanioMB MB</span>
+                                    <span class="ms-3"><i class="fas fa-folder me-1"></i>@backup.Ubicacion</span>
+                                </small>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" onclick="compararBackup('@backup.NombreArchivo', this)" style="font-weight: 600; min-width: 120px;">
+                                    <i class="fas fa-scale-balanced me-1"></i>Comparar
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary rounded-pill" onclick="restaurarBackup('@backup.NombreArchivo', this)" style="font-weight: 600; min-width: 120px;">
+                                    <i class="fas fa-undo me-1"></i>Restaurar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="compareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Comparar backup</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body" id="compareBody">
+                <div class="text-muted">Cargando comparacion...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function setLoadingButton(boton, loadingText, loadingIconClass) {
+    const estado = {
+        html: boton.innerHTML,
+        disabled: boton.disabled
+    };
+
+    boton.disabled = true;
+    boton.innerHTML = '<i class="' + loadingIconClass + ' me-1"></i>' + loadingText;
+
+    return estado;
+}
+
+function restoreButton(boton, estado) {
+    boton.disabled = estado.disabled;
+    boton.innerHTML = estado.html;
+}
+
+function seleccionarRutaBackup(boton) {
+    const estado = setLoadingButton(boton, 'Abriendo...', 'fas fa-spinner fa-spin');
+    fetch('/Backup/SeleccionarRuta', { method: 'POST' })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(data => {
+            if (!data.exito) {
+                alert('No se pudo seleccionar la ruta: ' + data.mensaje);
+                restoreButton(boton, estado);
+                return;
+            }
+
+            // Si el servidor devolvió múltiples unidades removibles, pedimos al usuario que elija
+            if (data.multiples && Array.isArray(data.drives) && data.drives.length > 0) {
+                let texto = 'Se detectaron varias unidades removibles:\n\n';
+                data.drives.forEach((d, i) => { texto += `${i + 1}) ${d}\n`; });
+                texto += '\nIngresá el número de la unidad a usar (o Cancelar):';
+                const escolha = prompt(texto, '1');
+                if (escolha === null) { restoreButton(boton, estado); return; }
+                const idx = parseInt(escolha, 10) - 1;
+                if (isNaN(idx) || idx < 0 || idx >= data.drives.length) { alert('Selección inválida.'); restoreButton(boton, estado); return; }
+
+                const rutaSeleccionada = data.drives[idx].replace(/\\+$/, '') + '\\AutoSys_Backups';
+                // Guardamos la ruta elegida en el servidor
+                fetch('/Backup/GuardarRuta', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'ruta=' + encodeURIComponent(rutaSeleccionada)
+                })
+                .then(r2 => { if (!r2.ok) throw new Error('HTTP ' + r2.status); return r2.json(); })
+                .then(d2 => {
+                    if (d2.exito) location.reload();
+                    else { alert('No se pudo guardar la ruta: ' + d2.mensaje); restoreButton(boton, estado); }
+                })
+                .catch(err => { alert('Error guardando ruta: ' + err); restoreButton(boton, estado); });
+
+                return;
+            }
+
+            // Ruta única o fallback
+            if (data.ruta) {
+                location.reload();
+                return;
+            }
+
+            restoreButton(boton, estado);
+        })
+        .catch(err => {
+            alert('Error: ' + err);
+            restoreButton(boton, estado);
+        });
+}
+
+function crearBackupManual(boton) {
+    const estado = setLoadingButton(boton, 'Creando...', 'fas fa-spinner fa-spin');
+
+    fetch('/Backup/CrearBackupManual', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.exito) {
+                alert('✅ ' + data.mensaje);
+                location.reload();
+            } else {
+                alert('❌ ' + data.mensaje);
+                restoreButton(boton, estado);
+            }
+        })
+        .catch(err => {
+            alert('❌ Error: ' + err);
+            restoreButton(boton, estado);
+        });
+}
+
+function guardarRutaBackup(boton) {
+    const estado = setLoadingButton(boton, 'Guardando...', 'fas fa-spinner fa-spin');
+    const ruta = document.getElementById('rutaBackup').value || '';
+
+    fetch('/Backup/GuardarRuta', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'ruta=' + encodeURIComponent(ruta)
+    })
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(data => {
+            if (data.exito) {
+                location.reload();
+            } else {
+                alert('No se pudo guardar la ruta: ' + data.mensaje);
+                restoreButton(boton, estado);
+            }
+        })
+        .catch(err => {
+            alert('Error: ' + err);
+            restoreButton(boton, estado);
+        });
+}
+
+function restaurarBackup(nombreArchivo, boton) {
+    if (!confirm('⚠️ Esto reemplazará todos los datos actuales. ¿Estás seguro?')) return;
+
+    const estado = setLoadingButton(boton, 'Restaurando...', 'fas fa-spinner fa-spin');
+
+    fetch('/Backup/Restaurar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'nombreArchivo=' + encodeURIComponent(nombreArchivo)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.exito) {
+            alert('✅ ' + data.mensaje);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('❌ Error: ' + data.mensaje);
+            restoreButton(boton, estado);
+        }
+    })
+    .catch(err => {
+        alert('❌ Error: ' + err);
+        restoreButton(boton, estado);
+    });
+}
+
+function compararBackup(nombreArchivo, boton) {
+    const estado = setLoadingButton(boton, 'Comparando...', 'fas fa-spinner fa-spin');
+
+    fetch(`/Backup/Comparar?nombreArchivo=${encodeURIComponent(nombreArchivo)}`)
+        .then(r => r.json())
+        .then(data => {
+            restoreButton(boton, estado);
+            if (!data.exito) {
+                alert('❌ ' + data.mensaje);
+                return;
+            }
+
+            const resumen = data.resumen || {};
+            const maxDetalles = data.limites?.maxDetalles || 0;
+
+            const html = `
+                <div class="mb-3">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="p-3 rounded border">
+                                <div class="text-muted small">Vehiculos (actual vs backup)</div>
+                                <div class="fs-5 fw-bold">${resumen.vehiculosActual ?? 0} / ${resumen.vehiculosBackup ?? 0}</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="p-3 rounded border">
+                                <div class="text-muted small">Reparaciones (actual vs backup)</div>
+                                <div class="fs-5 fw-bold">${resumen.reparacionesActual ?? 0} / ${resumen.reparacionesBackup ?? 0}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6 class="fw-bold">Vehiculos solo en backup</h6>
+                    ${renderList(data.vehiculosSoloBackup, 'No hay diferencias')}
+                </div>
+                <div class="mb-3">
+                    <h6 class="fw-bold">Vehiculos solo en actual</h6>
+                    ${renderList(data.vehiculosSoloActual, 'No hay diferencias')}
+                </div>
+                <div class="mb-3">
+                    <h6 class="fw-bold">Diferencias de reparaciones por vehiculo</h6>
+                    ${renderReparacionesPorVehiculo(data.reparacionesPorVehiculo)}
+                </div>
+                <div class="mb-3">
+                    <h6 class="fw-bold">Reparaciones solo en backup</h6>
+                    <div class="text-muted small mb-2">Mostrando hasta ${maxDetalles} diferencias.</div>
+                    ${renderReparacionesDetalle(data.reparacionesSoloBackup)}
+                </div>
+                <div class="mb-0">
+                    <h6 class="fw-bold">Reparaciones solo en actual</h6>
+                    <div class="text-muted small mb-2">Mostrando hasta ${maxDetalles} diferencias.</div>
+                    ${renderReparacionesDetalle(data.reparacionesSoloActual)}
+                </div>
+            `;
+
+            document.getElementById('compareBody').innerHTML = html;
+            const modal = new bootstrap.Modal(document.getElementById('compareModal'));
+            modal.show();
+        })
+        .catch(err => {
+            restoreButton(boton, estado);
+            alert('❌ Error: ' + err);
+        });
+}
+
+function renderList(items, emptyText) {
+    if (!items || items.length === 0) {
+        return `<div class="text-muted small">${emptyText}</div>`;
+    }
+
+    return `<ul class="list-group list-group-flush">${items.map(item =>
+        `<li class="list-group-item">${escapeHtml(item)}</li>`
+    ).join('')}</ul>`;
+}
+
+function renderReparacionesPorVehiculo(items) {
+    if (!items || items.length === 0) {
+        return '<div class="text-muted small">No hay diferencias.</div>';
+    }
+
+    const rows = items.map(item => {
+        const delta = item.diferencia > 0 ? `+${item.diferencia}` : `${item.diferencia}`;
+        return `
+            <tr>
+                <td>${escapeHtml(item.patente)}</td>
+                <td class="text-end">${item.actual}</td>
+                <td class="text-end">${item.backup}</td>
+                <td class="text-end">${delta}</td>
+            </tr>`;
+    }).join('');
+
+    return `
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Patente</th>
+                        <th class="text-end">Actual</th>
+                        <th class="text-end">Backup</th>
+                        <th class="text-end">Delta</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+}
+
+function renderReparacionesDetalle(items) {
+    if (!items || items.length === 0) {
+        return '<div class="text-muted small">No hay diferencias.</div>';
+    }
+
+    return `<ul class="list-group list-group-flush">${items.map(item =>
+        `<li class="list-group-item">
+            <div class="fw-semibold">${escapeHtml(item.patente)} - ${escapeHtml(item.fecha)}</div>
+            <div class="text-muted small">${item.kilometraje} km</div>
+            <div>${escapeHtml(item.detalle)}</div>
+        </li>`
+    ).join('')}</ul>`;
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+</script>

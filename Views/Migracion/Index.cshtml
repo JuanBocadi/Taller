@@ -1,3 +1,5 @@
+@model Taller.Controllers.MigracionController.MigracionIndexViewModel
+
 @{
     ViewData["Title"] = "Importar Excel";
 }
@@ -11,16 +13,77 @@
     <div class="alert alert-success border-0 shadow-sm mb-4">@TempData["Success"]</div>
 }
 
-<div class="card shadow-sm border-0 mt-4" style="border-radius: 1rem; background-color: var(--bg-card);">
-    <div class="card-body p-5 text-center">
-        <form asp-action="SubirExcels" method="post" enctype="multipart/form-data">
-            <div class="mb-4 w-50 mx-auto">
-                <input class="form-control form-control-lg shadow-sm" type="file" name="archivosExcel" multiple accept=".xls,.xlsx" required 
-                       style="background-color: var(--input-bg); color: var(--text-primary); border-color: var(--border-color);">
+<div class="row g-4 mt-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 h-100" style="border-radius: 1rem; background-color: var(--bg-card);">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3" style="color: var(--text-primary);">
+                    <i class="fas fa-folder-open text-success me-2"></i>Carpeta de migración
+                </h5>
+                <p class="text-muted small mb-3">
+                    Esta es la carpeta desde donde la app buscará los archivos Excel para migrar.
+                </p>
+
+                <label class="form-label fw-semibold" style="color: var(--text-primary);">Ruta actual</label>
+                <div class="input-group mb-3">
+                    <input id="rutaMigracion" class="form-control" type="text" value="@Model.RutaActual" readonly>
+                    <button type="button" class="btn btn-outline-success" onclick="seleccionarRutaMigracion()">
+                        <i class="fas fa-folder-open me-1"></i>Elegir
+                    </button>
+                </div>
+
+                <button type="button" class="btn btn-success rounded-pill w-100" onclick="seleccionarRutaMigracion()">
+                    <i class="fas fa-save me-2"></i>Seleccionar carpeta y guardar
+                </button>
+
+                <div class="alert alert-info border-0 mt-3 mb-0 small">
+                    <i class="fas fa-lightbulb me-1"></i>
+                    Podés apuntar a un disco D:, a una carpeta del equipo o a un pendrive.
+                </div>
             </div>
-            <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow-sm">
-                <i class="fas fa-cogs me-2"></i> Iniciar Importación
-            </button>
-        </form>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 h-100 mt-0" style="border-radius: 1rem; background-color: var(--bg-card);">
+            <div class="card-body p-5 text-center">
+                <form asp-action="SubirExcels" method="post" enctype="multipart/form-data">
+                    <div class="mb-4 w-50 mx-auto">
+                        <input class="form-control form-control-lg shadow-sm" type="file" name="archivosExcel" multiple accept=".xls,.xlsx" required 
+                               style="background-color: var(--input-bg); color: var(--text-primary); border-color: var(--border-color);">
+                    </div>
+                    <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow-sm">
+                        <i class="fas fa-cogs me-2"></i> Iniciar Importación
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+function seleccionarRutaMigracion() {
+    const boton = event.target.closest('button');
+    const textoOriginal = boton.innerHTML;
+    boton.disabled = true;
+    boton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Abriendo...';
+
+    fetch('/Migracion/SeleccionarRuta', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.exito) {
+                alert('Ruta guardada: ' + data.ruta);
+                location.reload();
+            } else {
+                alert('No se pudo seleccionar la ruta: ' + data.mensaje);
+                boton.disabled = false;
+                boton.innerHTML = textoOriginal;
+            }
+        })
+        .catch(err => {
+            alert('Error: ' + err);
+            boton.disabled = false;
+            boton.innerHTML = textoOriginal;
+        });
+}
+</script>
